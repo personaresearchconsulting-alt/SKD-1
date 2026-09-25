@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tes Wawasan Kebangsaan (TWK) - Persona Research & Consulting</title>
+    <style>
+        :root { --navy: #0b2340; --gold: #d4a017; --bg: #f8fafc; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            background: var(--bg); 
+            color: #1e293b; 
+            -webkit-user-select: none; 
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none; 
+        }
+        header { 
+            background: var(--navy); 
+            color: white; 
+            padding: 15px 5%; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 4px solid var(--gold); 
+        }
+        .brand-info {
+            font-size: 0.85em;
+            color: var(--gold);
+            margin-top: 3px;
+        }
+        .container { max-width: 950px; margin: 20px auto; padding: 0 15px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .opt { padding: 14px; margin: 8px 0; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .opt:hover { background: #f1f5f9; border-color: var(--navy); }
+        .opt.selected { background: #e0f2fe; border-color: var(--navy); font-weight: bold; }
+        .opt.correct-target { background: #dcfce7; border-color: #22c55e; font-weight: bold; color: #15803d; }
+        .opt.wrong-target { background: #fee2e2; border-color: #ef4444; font-weight: bold; color: #b91c1c; }
+        .nav-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 15px; }
+        .nav-item { height: 35px; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .nav-item.filled { background: var(--navy); color: white; }
+        .nav-item.active { border: 2px solid var(--gold); }
+        .btn { background: var(--navy); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #timer { font-size: 20px; font-weight: bold; color: var(--gold); font-family: monospace; }
+        .pembahasan-box { margin-top: 20px; padding: 15px; background: #f1f5f9; border-left: 5px solid var(--gold); border-radius: 6px; display: none; line-height: 1.5; font-size: 14px; }
+        .expired-msg { text-align: center; color: #ef4444; font-size: 1.2em; font-weight: bold; padding: 50px 0; }
+        #result-summary { display: none; margin-bottom: 20px; background: #e0f2fe; border: 1px solid #0284c7; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+<div class="container" id="quiz-app">
+    <header>
+        <div>
+            <b>TES WAWASAN KEBANGSAAN (TWK)</b> | 30 SOAL HOTS
+            <div class="brand-info">Persona Research & Consulting | WA: 0877 425 5786</div>
+        </div>
+        <div id="timer">30:00</div>
+    </header>
+
+    <div style="display:flex; gap:20px; margin-top:20px; flex-wrap: wrap;">
+        <div style="flex:3; min-width: 300px;">
+            <div id="result-summary"></div>
+            <div class="card">
+                <div id="q-no" style="font-weight:bold; color:var(--navy); margin-bottom:10px;">Soal 1 dari 30</div>
+                <div id="q-text" style="font-size:15px; line-height:1.6; margin-bottom:20px;"></div>
+                <div id="options"></div>
+                <div id="pembahasan" class="pembahasan-box"></div>
+                <div style="margin-top:25px; display:flex; justify-content:space-between;">
+                    <button class="btn" onclick="prevQ()" style="background:#64748b">Sebelumnya</button>
+                    <button class="btn" id="btn-next" onclick="nextQ()">Selanjutnya</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1; min-width: 250px;">
+            <div class="card" style="padding:15px;">
+                <div style="text-align:center; font-size:12px; font-weight:bold; margin-bottom:10px;">NAVIGASI SOAL</div>
+                <div id="navGrid" class="nav-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. TANGGAL KADALUARSA (Format: YYYY-MM-DD)
+    const EXPIRATION_DATE = "2026-12-31"; 
+    if (new Date() > new Date(EXPIRATION_DATE)) {
+        document.getElementById("quiz-app").innerHTML = `
+            <div class="card expired-msg">
+                Akses Simulasi Ini Telah Kadaluarsa.<br>
+                <small style="color:#64748b; font-weight:normal;">Silakan hubungi admin Persona Research & Consulting (WA: 0877 425 5786) untuk memperbarui akses.</small>
+            </div>`;
+    }
+
+    // 2. BANK SOAL (Kunci jawaban dienkripsi menggunakan Base64)
+    const rawBankTWK = [
+        { q: "Seorang pejabat publik menolak gratifikasi pengadaan barang walau ada ancaman politik. Tindakan ini mencerminkan pengamalan Pancasila sila ke-...", opts: ["Pertama", "Kedua", "Ketiga", "Keempat", "Kelima"], ans: "MQ==", pem: "<b>Pembahasan Detail:</b><br>Sila Kedua (Kemanusiaan yang Adil dan Beradab) menekankan prinsip keadilan, keadaban, serta nilai integritas moral dasar kemanusiaan untuk menolak segala bentuk kecurangan dan ketidakadilan (seperti gratifikasi)." },
+        { q: "Konflik pertanahan antar-etnis diselesaikan lewat musyawarah desa berdasar asas kearifan lokal. Hal ini selaras dengan sila ke-...", opts: ["Sila 1", "Sila 2", "Sila 3", "Sila 4", "Sila 5"], ans: "Mw==", pem: "<b>Pembahasan Detail:</b><br>Sila Keempat mengedepankan musyawarah mufakat untuk mencapai kesepakatan bersama dalam menyelesaikan permasalahan publik maupun konflik sosial." },
+        { q: "Pasal 33 ayat (3) UUD 1945 mengamanatkan bahwa bumi, air, dan kekayaan alam dikuasai negara untuk...", opts: ["Keuntungan BUMN semata", "Kemakmuran rakyat sebesar-besarnya", "Cadangan devisa negara", "Pembangunan infrastruktur pusat", "Pembayaran utang luar negeri"], ans: "MQ==", pem: "<b>Pembahasan Detail:</b><br>Amanat eksplisit Pasal 33 ayat (3) UUD 1945 secara tegas menyatakan bahwa bumi, air, dan kekayaan alam yang terkandung di dalamnya dikuasai oleh negara dan dipergunakan untuk sebesar-besar kemakmuran rakyat." },
+        { q: "Di tengah era digital, marak hoaks yang memecah belah persatuan. Wujud Bela Negara yang paling relevan bagi generasi muda adalah...", opts: ["Mengikuti latihan militer", "Melakukan literasi digital dan tidak menyebar hoaks", "Menjauhi media sosial", "Melaporkan semua akun ke polisi", "Mengisolasi diri dari informasi luar"], ans: "MQ==", pem: "<b>Pembahasan Detail:</b><br>Bela negara non-fisik bagi generasi muda di era informasi digital diwujudkan melalui literasi digital, saring sebelum saring, dan menjaga keutuhan bangsa dari propaganda hoaks." },
+        { q: "Asas kewarganegaraan yang menentukan kewarganegaraan seseorang berdasarkan keturunan dinamakan...", opts: ["Ius Soli", "Ius Sanguinis", "Apatride", "Bipatride", "Multipatride"], ans: "MQ==", pem: "<b>Pembahasan Detail:</b><br><i>Ius Sanguinis</i> adalah asas keturunan/darah yang menentukan kewarganegaraan berdasarkan pertalian darah orang tua, sedangkan <i>Ius Soli</i> berdasarkan tempat kelahiran." },
+        { q: "Penyelenggaraan pemerintahan yang bersih dari KKN merupakan amanat Ketetapan MPR No. ...", opts: ["TAP MPR XI/MPR/1998", "TAP MPR VI/MPR/2001", "TAP MPR III/MPR/2000", "TAP MPR VII/MPR/2000", "TAP MPR I/MPR/1998"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>TAP MPR No. XI/MPR/1998 mengatur tentang Penyelenggaraan Negara yang Bersih dan Bebas dari Korupsi, Kolusi, dan Nepotisme (KKN)." },
+        { q: "Sistem pemerintahan Indonesia setelah amandemen UUD 1945 menegaskan posisi presiden sebagai...", opts: ["Kepala Negara sekaligus Kepala Pemerintahan", "Kepala Negara saja", "Kepala Pemerintahan saja", "Mandataris MPR sepenuhnya", "Simbol pemersatu tanpa kewenangan eksekutif"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Sistem Presidensiil murni setelah amandemen UUD 1945 mendudukkan Presiden dalam posisi ganda, yaitu sebagai Kepala Negara sekaligus Kepala Pemerintahan." },
+        { q: "Seorang aparat negara menolak perintah atasan untuk memanipulasi data anggaran demi kepentingan pribadi atasan. Sikap ini menunjukkan...", opts: ["Integritas dan profesionalisme", "Pembangkangan sipil", "Keberanian yang tidak realistis", "Bela negara fisik", "Pelanggaran hirarki dinas"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Menolak perintah atasan yang melanggar hukum/etika merupakan wujud integritas tinggi dan profesionalisme sebagai aparatur sipil negara." },
+        { q: "Pengakuan persamaan derajat, hak, dan kewajiban antara sesama manusia merupakan nilai dasar dari sila...", opts: ["Ketuhanan Yang Maha Esa", "Kemanusiaan yang Adil dan Beradab", "Persatuan Indonesia", "Kerakyatan yang Dipimpin oleh Hikmat", "Keadilan Sosial bagi Seluruh Rakyat Indonesia"], ans: "MQ==", pem: "<b>Pembahasan Detail:</b><br>Persamaan derajat, hak, dan kewajiban tanpa membeda-bedakan suku, keturunan, dan agama merupakan intisari dari Sila Kedua Pancasila." },
+        { q: "Bhinneka Tunggal Ika pertama kali ditemukan dalam kitab Sutasoma karya Mpu Tantular pada zaman kerajaan...", opts: ["Singasari", "Majapahit", "Sriwijaya", "Mataram Kuno", "Kutai"], ans: "MQ==", pem: "<b>Pembahasan Detail:</b><br>Semboyan Bhinneka Tunggal Ika dipetik dari Kakawin Sutasoma karya Mpu Tantular yang ditulis pada era kejayaan Kerajaan Majapahit abad ke-14." },
+        { q: "Wewenang Mahkamah Konstitusi sesuai Pasal 24C UUD 1945 adalah sebagai berikut, KECUALI...", opts: ["Menguji undang-undang terhadap UUD", "Memutus sengketa kewenangan lembaga negara", "Memutus pembubaran partai politik", "Memutus perselisihan hasil pemilu", "Menguji peraturan di bawah UU terhadap UU"], ans: "NA==", pem: "<b>Pembahasan Detail:</b><br>Menguji peraturan di bawah undang-undang terhadap undang-undang adalah wewenang Mahkamah Agung (MA). MK hanya menguji UU terhadap UUD 1945." },
+        { q: "Lembaga negara yang berwenang mengusulkan pengangkatan hakim agung adalah...", opts: ["Komisi Yudisial", "Mahkamah Agung", "DPR", "Presiden", "Mahkamah Konstitusi"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Sesuai Pasal 24A ayat (3) UUD 1945, Komisi Yudisial (KY) berwenang mengusulkan pengangkatan Hakim Agung kepada DPR untuk mendapatkan persetujuan." },
+        { q: "Sikap patriotisme dalam kehidupan berbangsa dan bernegara ditunjukkan melalui...", opts: ["Rela berkorban demi kepentingan bangsa dan negara", "Mengutamakan kepentingan pribadi di atas kelompok", "Menutup diri dari pengaruh luar", "Mengikuti seluruh kebudayaan asing", "Menolak kerja sama internasional"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Patriotisme adalah sikap jiwa dan semangat kerelaan berkorban demi kepentingan bangsa dan tanah air di atas kepentingan pribadi maupun golongan." },
+        { q: "Hubungan kerja sama internasional Indonesia berlandaskan pada prinsip politik luar negeri...", opts: ["Bebas Aktif", "Netral Pasif", "Blok Barat", "Blok Timur", "Ekspansif"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Prinsip Politik Luar Negeri Indonesia adalah Bebas (tidak memihak blok manapun) dan Aktif (turut serta menciptakan perdamaian dunia)." },
+        { q: "Proklamasi Kemerdekaan Indonesia pada tanggal 17 Agustus 1945 dibacakan di...", opts: ["Jalan Pegangsaan Timur No. 56 Jakarta", "Rengasdengklok", "Gedung Pancasila", "Rumah Laksamana Maeda", "Istana Merdeka"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Teks Proklamasi Kemerdekaan dibacakan oleh Ir. Soekarno didampingi Drs. Mohammad Hatta di kediaman Soekarno, Jalan Pegangsaan Timur No. 56 Jakarta." },
+        { q: "Kewenangan pemerintah daerah untuk mengurus sendiri urusan pemerintahan menurut asas otonomi dinamakan...", opts: ["Otonomi Daerah", "Tugas Pembantuan", "Desentralisasi", "Dekonsentrasi", "Sentralisasi"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Hak, wewenang, dan kewajiban daerah otonom untuk mengatur dan mengurus sendiri urusan pemerintahan dinamakan Otonomi Daerah." },
+        { q: "Sumpah Pemuda pada 28 Oktober 1928 menegaskan tiga ikrar yaitu...", opts: ["Satu Tumpah Darah, Satu Bangsa, Satu Bahasa", "Satu Agama, Satu Bangsa, Satu Bahasa", "Satu Cita-cita, Satu Negara, Satu Bahasa", "Satu Pemimpin, Satu Wilayah, Satu Bangsa", "Satu Suku, Satu Ideologi, Satu Negara"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Ikrar Sumpah Pemuda menegaskan: Bertumpah darah yang satu (Tanah Indonesia), Berbangsa yang satu (Bangsa Indonesia), dan Menjunjung bahasa persatuan (Bahasa Indonesia)." },
+        { q: "Pasal dalam UUD 1945 yang mengatur tentang Hak Atas Pendidikan adalah...", opts: ["Pasal 31", "Pasal 33", "Pasal 27", "Pasal 28", "Pasal 30"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Pasal 31 ayat (1) UUD 1945 secara eksplisit menegaskan bahwa 'Setiap warga negara berhak mendapat pendidikan'." },
+        { q: "Pancasila dijadikan sebagai petunjuk dalam kehidupan sehari-hari masyarakat Indonesia. Kedudukan Pancasila ini sebagai...", opts: ["Pandangan Hidup Bangsa", "Dasar Negara", "Perjanjian Luhur", "Kepribadian Bangsa", "Cita-cita Nasional"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Pancasila sebagai Pandangan Hidup Bangsa (Way of Life) berfungsi sebagai petunjuk, pedoman, dan penuntun sikap hidup sehari-hari." },
+        { q: "Unsur mutlak berdirinya suatu negara secara de facto meliputi hal-hal berikut, KECUALI...", opts: ["Rakyat", "Wilayah yang pasti", "Pemerintahan yang berdaulat", "Pengakuan dari negara lain", "Adanya Konstitusi tertulis"], ans: "Mw==", pem: "<b>Pembahasan Detail:</b><br>Pengakuan dari negara lain merupakan unsur deklaratif (de jure), sedangkan unsur de facto (konstitutif) mencakup Rakyat, Wilayah, dan Pemerintahan yang berdaulat." },
+        { q: "Badan Penyelidik Usaha-Usaha Persiapan Kemerdekaan Indonesia (BPUPKI) diketuai oleh...", opts: ["Dr. K.R.T. Radjiman Wedyodiningrat", "Ir. Soekarno", "Drs. Mohammad Hatta", "Mr. Soepomo", "RP Soeroso"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>BPUPKI (Dokuritsu Junbi Cosakai) diketuai oleh Dr. K.R.T. Radjiman Wedyodiningrat dengan wakil ketua RP Soeroso dan Ichibangase Yosio." },
+        { q: "Perubahan atau amandemen UUD 1945 telah dilakukan sebanyak...", opts: ["4 Kali", "3 Kali", "5 Kali", "2 Kali", "1 Kali"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Amandemen UUD 1945 dilaksanakan sebanyak 4 kali melalui Sidang Umum/Tahunan MPR, yaitu pada tahun 1999, 2000, 2001, dan 2002." },
+        { q: "Cinta tanah air dan bangsa merupakan pengamalan sila Pancasila ke-...", opts: ["Ketiga", "Pertama", "Kedua", "Keempat", "Kelima"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Mengembangkan rasa cinta kepada tanah air dan bangsa merupakan butir pengamalan Sila Ketiga (Persatuan Indonesia)." },
+        { q: "Keberagaman adat budaya di Indonesia disatukan oleh komitmen kebangsaan berbasis...", opts: ["Pancasila dan UUD 1945", "Suku terbesar", "Bahasa daerah tertentu", "Kekuatan ekonomi pusat", "Sistem politik tunggal"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Pancasila dan UUD 1945 merupakan konsensus filosofis dan hukum tertinggi yang menyatukan keberagaman suku dan budaya di Indonesia." },
+        { q: "Lambang Garuda Pancasila dengan semboyan Bhinneka Tunggal Ika dirancang oleh...", opts: ["Sultan Hamid II", "Mr. Muhammad Yamin", "Ir. Soekarno", "Ki Hajar Dewantara", "Prof. Soepomo"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Lambang negara Garuda Pancasila dirancang oleh Sultan Hamid II dari Pontianak dan kemudian disempurnakan oleh Presiden Soekarno." },
+        { q: "Kerja sama antar warga tanpa membedakan latar belakang sosial demi kepentingan umum dinamakan...", opts: ["Gotong Royong", "Individualisme", "Komunitarianisme", "Segregasi", "Akulturasi"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Gotong royong adalah inti/sari dari Pancasila yang mencerminkan budaya kerja sama dan kesetiakawanan sosial khas masyarakat Indonesia." },
+        { q: "Bentuk negara Indonesia adalah Negara Kesatuan yang berbentuk Republik, tertuang dalam UUD 1945 pasal...", opts: ["Pasal 1 ayat (1)", "Pasal 1 ayat (2)", "Pasal 2 ayat (1)", "Pasal 3 ayat (1)", "Pasal 33 ayat (1)"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Pasal 1 ayat (1) UUD 1945 menyatakan secara eksplisit: 'Negara Indonesia ialah Negara Kesatuan, yang berbentuk Republik'." },
+        { q: "Sistem pertahanan dan keamanan rakyat semesta (Sishankamrata) menempatkan TNI dan Polri sebagai...", opts: ["Kekuatan Utama", "Kekuatan Pendukung", "Kekuatan Cadangan", "Komponen Lengkap", "Satu-satunya Penjaga"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Sesuai Pasal 30 ayat (2) UUD 1945, TNI dan Polri berkedudukan sebagai kekuatan utama, sedangkan rakyat sebagai kekuatan pendukung." },
+        { q: "Lembaga eksekutif yang memegang kekuasaan pemerintahan menurut UUD 1945 adalah...", opts: ["Presiden", "DPR", "MPR", "MA", "BPK"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Pasal 4 ayat (1) UUD 1945 menyatakan bahwa Presiden Republik Indonesia memegang kekuasaan pemerintahan menurut Undang-Undang Dasar." },
+        { q: "Perilaku menaati peraturan lalu lintas atas kesadaran keselamatan bersama mencerminkan...", opts: ["Budaya tertib dan taat hukum", "Ketakutan akan sanksi tilang", "Sikap formalis semata", "Tindakan mencari pujian", "Keharusan paksaan dari polisi"], ans: "MA==", pem: "<b>Pembahasan Detail:</b><br>Kesadaran hukum yang tinggi diwujudkan melalui kepatuhan norma/aturan lalu lintas atas dasar moralitas keselamatan bersama, bukan karena paksaan." }
+    ];
+
+    let bankTWK = [];
+    let currentQ = 0;
+    let userAnswers = {};
+    let isFinished = false;
+    let timerInterval;
+
+    // Helper Decode Base64
+    function decodeBase64(str) {
+        return parseInt(atob(str));
+    }
+
+    // 3. AUTO-SHUFFLE ENGINE (Mengacak Soal & Opsi Jawaban)
+    function prepareQuestions() {
+        let tempBank = JSON.parse(JSON.stringify(rawBankTWK));
+        
+        // Acak urutan soal
+        for (let i = tempBank.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [tempBank[i], tempBank[j]] = [tempBank[j], tempBank[i]];
+        }
+
+        // Acak opsi jawaban di dalam setiap soal
+        tempBank.forEach(q => {
+            const correctIndex = decodeBase64(q.ans);
+            const correctText = q.opts[correctIndex];
+
+            // Pasangkan teks dengan flag kebenaran
+            let mappedOpts = q.opts.map((optText, idx) => ({
+                text: optText,
+                isCorrect: idx === correctIndex
+            }));
+
+            // Acak opsi
+            for (let i = mappedOpts.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [mappedOpts[i], mappedOpts[j]] = [mappedOpts[j], mappedOpts[i]];
+            }
+
+            // Simpan opsi acak dan perbarui indeks jawaban yang benar
+            q.opts = mappedOpts.map(o => o.text);
+            q.correctIdx = mappedOpts.findIndex(o => o.isCorrect);
+        });
+
+        bankTWK = tempBank;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        prepareQuestions();
+        renderNav();
+        loadQ(0);
+        startTimer(30 * 60);
+    });
+
+    function loadQ(idx) {
+        currentQ = idx;
+        const qData = bankTWK[idx];
+        document.getElementById('q-no').innerText = `Soal ${idx + 1} dari ${bankTWK.length}`;
+        document.getElementById('q-text').innerText = qData.q;
+        
+        let html = '';
+        qData.opts.forEach((opt, i) => {
+            let cls = 'opt';
+            if (userAnswers[idx] === i) cls += ' selected';
+            
+            // Tampilan Pembahasan jika tes sudah selesai
+            if (isFinished) {
+                if (i === qData.correctIdx) {
+                    cls += ' correct-target';
+                } else if (userAnswers[idx] === i && i !== qData.correctIdx) {
+                    cls += ' wrong-target';
+                }
+            }
+
+            const clickAttr = isFinished ? '' : `onclick="selectOpt(${i})"`;
+            html += `<div class="${cls}" ${clickAttr}>${String.fromCharCode(65+i)}. ${opt}</div>`;
+        });
+
+        document.getElementById('options').innerHTML = html;
+        
+        const btnNext = document.getElementById('btn-next');
+        if (isFinished) {
+            btnNext.innerText = idx === bankTWK.length - 1 ? "Selesai Review" : "Selanjutnya";
+            const pemBox = document.getElementById('pembahasan');
+            pemBox.style.display = 'block';
+            pemBox.innerHTML = qData.pem;
+        } else {
+            btnNext.innerText = idx === bankTWK.length - 1 ? "Selesai" : "Selanjutnya";
+            document.getElementById('pembahasan').style.display = 'none';
+        }
+
+        renderNav();
+    }
+
+    function selectOpt(optIdx) {
+        if (isFinished) return;
+        userAnswers[currentQ] = optIdx;
+        loadQ(currentQ);
+    }
+
+    function renderNav() {
+        let html = '';
+        for(let i = 0; i < bankTWK.length; i++) {
+            let cls = 'nav-item';
+            if(userAnswers[i] !== undefined) cls += ' filled';
+            if(i === currentQ) cls += ' active';
+            html += `<div class="${cls}" onclick="loadQ(${i})">${i + 1}</div>`;
+        }
+        document.getElementById('navGrid').innerHTML = html;
+    }
+
+    function nextQ() {
+        if(currentQ === bankTWK.length - 1) {
+            if(!isFinished) {
+                if(confirm("Apakah Anda yakin ingin menyelesaikan Tes TWK ini?")) finishTest();
+            }
+            return;
+        }
+        loadQ(currentQ + 1);
+    }
+
+    function prevQ() {
+        if(currentQ > 0) loadQ(currentQ - 1);
+    }
+
+    function startTimer(seconds) {
+        let t = seconds;
+        timerInterval = setInterval(() => {
+            if (isFinished) return;
+            let m = Math.floor(t / 60);
+            let s = t % 60;
+            document.getElementById('timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            if(--t < 0) {
+                clearInterval(timerInterval);
+                alert("Waktu pengerjaan telah habis!");
+                finishTest();
+            }
+        }, 1000);
+    }
+
+    function finishTest() {
+        clearInterval(timerInterval);
+        isFinished = true;
+        let benar = 0;
+        let salah = 0;
+        let kosong = 0;
+
+        bankTWK.forEach((q, i) => {
+            if(userAnswers[i] === undefined) {
+                kosong++;
+            } else if(userAnswers[i] === q.correctIdx) {
+                benar++;
+            } else {
+                salah++;
+            }
+        });
+
+        const score = benar * 5;
+        const maxScore = bankTWK.length * 5;
+
+        // Tampilkan Ringkasan Hasil Di Atas Soal
+        const resDiv = document.getElementById('result-summary');
+        resDiv.style.display = 'block';
+        resDiv.innerHTML = `
+            <h3 style="margin-top:0; color:var(--navy);">Hasil Simulasi TWK</h3>
+            <p style="margin: 5px 0;"><strong>Skor Akhir:</strong> ${score} / ${maxScore}</p>
+            <p style="margin: 5px 0;"><strong>Rincian:</strong> Benar: ${benar} | Salah: ${salah} | Kosong: ${kosong}</p>
+            <p style="margin: 5px 0;"><strong>Status:</strong> ${score >= 65 ? '<span style="color:green;font-weight:bold;">MEMENUHI PASSING GRADE (≥65)</span>' : '<span style="color:red;font-weight:bold;">BELUM MEMENUHI PASSING GRADE (<65)</span>'}</p>
+            <small style="color:#555;"><i>Silakan periksa pembahasan detail untuk setiap nomor soal di bawah ini.</i></small>
+        `;
+
+        loadQ(0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 4. KEAMANAN TAMBAHAN (Anti-Copy, Cut, & DevTools Key Block)
+    document.addEventListener('copy', (e) => e.preventDefault());
+    document.addEventListener('cut', (e) => e.preventDefault());
+    document.addEventListener('keydown', (e) => {
+        if (
+            e.key === 'F12' ||
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+            (e.ctrlKey && (e.key === 'u' || e.key === 's' || e.key === 'c'))
+        ) {
+            e.preventDefault();
+        }
+    });
+</script>
+</body>
+</html>

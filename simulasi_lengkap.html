@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi SKD Lengkap (110 Soal) - PRC</title>
+    <style>
+        :root { --navy: #0b2340; --gold: #d4a017; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #1e293b; -webkit-user-select: none; user-select: none; }
+        header { background: var(--navy); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--gold); }
+        .container { max-width: 950px; margin: 20px auto; padding: 0 15px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .opt { padding: 14px; margin: 8px 0; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .opt:hover { background: #f1f5f9; border-color: var(--navy); }
+        .opt.selected { background: #e0f2fe; border-color: var(--navy); font-weight: bold; }
+        .nav-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin-top: 10px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
+        .nav-item { height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .nav-item.filled { background: var(--navy); color: white; }
+        .nav-item.active { border: 2px solid var(--gold); }
+        .btn { background: var(--navy); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #timer { font-size: 20px; font-weight: bold; color: var(--gold); font-family: monospace; }
+        .category-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; background: var(--gold); color: var(--navy); margin-bottom: 10px; }
+        .fig-box { text-align: center; margin: 15px 0; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+<div class="container">
+    <header>
+        <div><b>SIMULASI CAT SKD LENGKAP</b> | 110 SOAL</div>
+        <div id="timer">100:00</div>
+    </header>
+
+    <div style="display:flex; gap:20px; margin-top:20px; flex-wrap: wrap;">
+        <div style="flex:3; min-width:300px;">
+            <div class="card">
+                <div><span id="cat-badge" class="category-badge">TWK</span></div>
+                <div id="q-no" style="font-weight:bold; color:var(--navy); margin-bottom:10px;">Soal 1 dari 110</div>
+                <div id="q-text" style="font-size:15px; line-height:1.6; margin-bottom:15px;"></div>
+                <div id="q-fig" class="fig-box"></div>
+                <div id="options"></div>
+                <div style="margin-top:25px; display:flex; justify-content:space-between;">
+                    <button class="btn" onclick="prevQ()" style="background:#64748b">Sebelumnya</button>
+                    <button class="btn" id="btn-next" onclick="nextQ()">Selanjutnya</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1; min-width:250px;">
+            <div class="card" style="padding:15px;">
+                <div style="text-align:center; font-size:12px; font-weight:bold; margin-bottom:10px;">NAVIGASI 110 SOAL</div>
+                <div id="navGrid" class="nav-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const bankTWK_data = [
+        { q: "Seorang pejabat publik menolak gratifikasi pengadaan barang walau ada ancaman politik. Tindakan ini mencerminkan pengamalan Pancasila sila ke-...", opts: ["Pertama", "Kedua", "Ketiga", "Keempat", "Kelima"], ans: 1 },
+        { q: "Konflik pertanahan antar-etnis diselesaikan lewat musyawarah desa berdasar asas kearifan lokal. Hal ini selaras dengan sila ke-...", opts: ["Sila 1", "Sila 2", "Sila 3", "Sila 4", "Sila 5"], ans: 3 },
+        { q: "Pasal 33 ayat (3) UUD 1945 mengamanatkan bahwa bumi, air, dan kekayaan alam dikuasai negara untuk...", opts: ["Keuntungan BUMN semata", "Kemakmuran rakyat sebesar-besarnya", "Cadangan devisa negara", "Pembangunan infrastruktur pusat", "Pembayaran utang luar negeri"], ans: 1 },
+        { q: "Di tengah era digital, marak hoaks yang memecah belah persatuan. Wujud Bela Negara yang paling relevan bagi generasi muda adalah...", opts: ["Mengikuti latihan militer", "Melakukan literasi digital dan tidak menyebar hoaks", "Menjauhi media sosial", "Melaporkan semua akun ke polisi", "Mengisolasi diri dari informasi luar"], ans: 1 },
+        { q: "Asas kewarganegaraan yang menentukan kewarganegaraan seseorang berdasarkan keturunan dinamakan...", opts: ["Ius Soli", "Ius Sanguinis", "Apatride", "Bipatride", "Multipatride"], ans: 1 },
+        { q: "Penyelenggaraan pemerintahan yang bersih dari KKN merupakan amanat Ketetapan MPR No. ...", opts: ["TAP MPR XI/MPR/1998", "TAP MPR VI/MPR/2001", "TAP MPR III/MPR/2000", "TAP MPR VII/MPR/2000", "TAP MPR I/MPR/1998"], ans: 0 },
+        { q: "Sistem pemerintahan Indonesia setelah amandemen UUD 1945 menegaskan posisi presiden sebagai...", opts: ["Kepala Negara sekaligus Kepala Pemerintahan", "Kepala Negara saja", "Kepala Pemerintahan saja", "Mandataris MPR sepenuhnya", "Simbol pemersatu tanpa kewenangan eksekutif"], ans: 0 },
+        { q: "Seorang aparat negara menolak perintah atasan untuk memanipulasi data anggaran demi kepentingan pribadi atasan. Sikap ini menunjukkan...", opts: ["Integritas dan profesionalisme", "Pembangkangan sipil", "Keberanian yang tidak realistis", "Bela negara fisik", "Pelanggaran hirarki dinas"], ans: 0 },
+        { q: "Pengakuan persamaan derajat, hak, dan kewajiban antara sesama manusia merupakan nilai dasar dari sila...", opts: ["Ketuhanan Yang Maha Esa", "Kemanusiaan yang Adil dan Beradab", "Persatuan Indonesia", "Kerakyatan yang Dipimpin oleh Hikmat", "Keadilan Sosial bagi Seluruh Rakyat Indonesia"], ans: 1 },
+        { q: "Bhinneka Tunggal Ika pertama kali ditemukan dalam kitab Sutasoma karya Mpu Tantular pada zaman kerajaan...", opts: ["Singasari", "Majapahit", "Sriwijaya", "Mataram Kuno", "Kutai"], ans: 1 },
+        { q: "Wewenang Mahkamah Konstitusi sesuai Pasal 24C UUD 1945 adalah sebagai berikut, KECUALI...", opts: ["Menguji undang-undang terhadap UUD", "Memutus sengketa kewenangan lembaga negara", "Memutus pembubaran partai politik", "Memutus perselisihan hasil pemilu", "Menguji peraturan di bawah UU terhadap UU"], ans: 4 },
+        { q: "Lembaga negara yang berwenang mengusulkan pengangkatan hakim agung adalah...", opts: ["Komisi Yudisial", "Mahkamah Agung", "DPR", "Presiden", "Mahkamah Konstitusi"], ans: 0 },
+        { q: "Sikap patriotisme dalam kehidupan berbangsa dan bernegara ditunjukkan melalui...", opts: ["Rela berkorban demi kepentingan bangsa dan negara", "Mengutamakan kepentingan pribadi di atas kelompok", "Menutup diri dari pengaruh luar", "Mengikuti seluruh kebudayaan asing", "Menolak kerja sama internasional"], ans: 0 },
+        { q: "Hubungan kerja sama internasional Indonesia berlandaskan pada prinsip politik luar negeri...", opts: ["Bebas Aktif", "Netral Pasif", "Blok Barat", "Blok Timur", "Ekspansif"], ans: 0 },
+        { q: "Proklamasi Kemerdekaan Indonesia pada tanggal 17 Agustus 1945 dibacakan di...", opts: ["Jalan Pegangsaan Timur No. 56 Jakarta", "Rengasdengklok", "Gedung Pancasila", "Rumah Laksamana Maeda", "Istana Merdeka"], ans: 0 },
+        { q: "Kewenangan pemerintah daerah untuk mengurus sendiri urusan pemerintahan menurut asas otonomi dinamakan...", opts: ["Otonomi Daerah", "Tugas Pembantuan", "Desentralisasi", "Dekonsentrasi", "Sentralisasi"], ans: 0 },
+        { q: "Sumpah Pemposisian Sumpah Pemuda pada 28 Oktober 1928 menegaskan tiga ikrar yaitu...", opts: ["Satu Tumpah Darah, Satu Bangsa, Satu Bahasa", "Satu Agama, Satu Bangsa, Satu Bahasa", "Satu Cita-cita, Satu Negara, Satu Bahasa", "Satu Pemimpin, Satu Wilayah, Satu Bangsa", "Satu Suku, Satu Ideologi, Satu Negara"], ans: 0 },
+        { q: "Pasal dalam UUD 1945 yang mengatur tentang Hak Atas Pendidikan adalah...", opts: ["Pasal 31", "Pasal 33", "Pasal 27", "Pasal 28", "Pasal 30"], ans: 0 },
+        { q: "Pancasila dijadikan sebagai petunjuk dalam kehidupan sehari-hari masyarakat Indonesia. Kedudukan Pancasila ini sebagai...", opts: ["Pandangan Hidup Bangsa", "Dasar Negara", "Perjanjian Luhur", "Kepribadian Bangsa", "Cita-cita Nasional"], ans: 0 },
+        { q: "Unsur mutlak berdirinya suatu negara secara de facto meliputi hal-hal berikut, KECUALI...", opts: ["Rakyat", "Wilayah yang pasti", "Pemerintahan yang berdaulat", "Pengakuan dari negara lain", "Adanya Konstitusi tertulis"], ans: 3 },
+        { q: "Badan Penyelidik Usaha-Usaha Persiapan Kemerdekaan Indonesia (BPUPKI) diketuai oleh...", opts: ["Dr. K.R.T. Radjiman Wedyodiningrat", "Ir. Soekarno", "Drs. Mohammad Hatta", "Mr. Soepomo", "RP Soeroso"], ans: 0 },
+        { q: "Perubahan atau amandemen UUD 1945 telah dilakukan sebanyak...", opts: ["4 Kali", "3 Kali", "5 Kali", "2 Kali", "1 Kali"], ans: 0 },
+        { q: "Cinta tanah air dan bangsa merupakan pengamalan sila Pancasila ke-...", opts: ["Ketiga", "Pertama", "Kedua", "Keempat", "Kelima"], ans: 0 },
+        { q: "Keberagaman adat budaya di Indonesia disatukan oleh komitmen kebangsaan berbasis...", opts: ["Pancasila dan UUD 1945", "Suku terbesar", "Bahasa daerah tertentu", "Kekuatan ekonomi pusat", "Sistem politik tunggal"], ans: 0 },
+        { q: "Lambang Garuda Pancasila dengan semboyan Bhinneka Tunggal Ika dirancang oleh...", opts: ["Sultan Hamid II", "Mr. Muhammad Yamin", "Ir. Soekarno", "Ki Hajar Dewantara", "Prof. Soepomo"], ans: 0 },
+        { q: "Kerja sama antar warga tanpa membedakan latar belakang sosial demi kepentingan umum dinamakan...", opts: ["Gotong Royong", "Individualisme", "Komunitarianisme", "Segregasi", "Akulturasi"], ans: 0 },
+        { q: "Bentuk negara Indonesia adalah Negara Kesatuan yang berbentuk Republik, tertuang dalam UUD 1945 pasal...", opts: ["Pasal 1 ayat (1)", "Pasal 1 ayat (2)", "Pasal 2 ayat (1)", "Pasal 3 ayat (1)", "Pasal 33 ayat (1)"], ans: 0 },
+        { q: "Sistem pertahanan dan keamanan rakyat semesta (Sishankamrata) menempatkan TNI dan Polri sebagai...", opts: ["Kekuatan Utama", "Kekuatan Pendukung", "Kekuatan Cadangan", "Komponen Lengkap", "Satu-satunya Penjaga"], ans: 0 },
+        { q: "Lembaga eksekutif yang memegang kekuasaan pemerintahan menurut UUD 1945 adalah...", opts: ["Presiden", "DPR", "MPR", "MA", "BPK"], ans: 0 },
+        { q: "Perilaku menaati peraturan lalu lintas atas kesadaran keselamatan bersama mencerminkan...", opts: ["Budaya tertib dan taat hukum", "Ketakutan akan sanksi tilang", "Sikap formalis semata", "Tindakan mencari pujian", "Keharusan paksaan dari polisi"], ans: 0 }
+    ];
+
+    const bankTIU_data = [
+        { q: "REBOISASI : HUJAN = ... : ...", opts: ["Preservasi : Pengawetan", "Imunisasi : Kekebalan", "Penanaman : Pohon", "Erosi : Banjir", "Evakuasi : Korban"], ans: 1 },
+        { q: "Semua polisi berbadan tegap. Sebagian polisi adalah penembak jitu. Kesimpulan yang benar adalah...", opts: ["Semua yang berbadan tegap adalah penembak jitu", "Sebagian penembak jitu berbadan tegap", "Semua penembak jitu adalah polisi berbadan tegap", "Sebagian polisi tidak berbadan tegap", "Tidak ada polisi penembak jitu yang berbadan tegap"], ans: 1 },
+        { q: "Deret angka: 3, 7, 15, 31, 63, ... Angka berikutnya adalah...", opts: ["127", "125", "126", "128", "130"], ans: 0 },
+        { q: "Jika A > B dan B = C, sementara C < D, maka kesimpulan yang pasti adalah...", opts: ["A > D", "A < D", "A = D", "B < D", "A dan D tidak dapat ditentukan tetapi B < D"], ans: 4 },
+        { q: "MOBIL : BENSIN = PELARI : ...", opts: ["Sepatu", "Lintasan", "Makanan", "Oksigen", "Lari"], ans: 2 },
+        { q: "Seri huruf: C, F, I, L, O, ... Huruf berikutnya adalah...", opts: ["P", "Q", "R", "S", "T"], ans: 2 },
+        { q: "Semua mahasiswa peserta ujian membawa kartu ujian. Sebagian peserta ujian mengenakan kemeja putih. Kesimpulannya...", opts: ["Semua peserta berkemeja putih membawa kartu ujian", "Sebagian mahasiswa peserta ujian mengenakan kemeja putih dan membawa kartu ujian", "Semua yang membawa kartu ujian adalah mahasiswa berkemeja putih", "Sebagian peserta ujian tidak membawa kartu ujian", "Mahasiswa tidak berkemeja putih tidak membawa kartu ujian"], ans: 1 },
+        { q: "KAMPUNG : DESA = KOTA : ...", opts: ["Metropolis", "Provinsi", "Negara", "Dusun", "Wilayah"], ans: 0 },
+        { q: "Deret angka: 2, 4, 8, 16, 32, ... Angka berikutnya adalah...", opts: ["48", "60", "64", "68", "72"], ans: 2 },
+        { q: "Sinonim kata KELAS :", opts: ["Kategori", "Tempat", "Tingkat", "Sekolah", "Grup"], ans: 0 },
+        { q: "Antonim kata ABSTRAK :", opts: ["Maya", "Konkret", "Samar", "Jelas", "Fakta"], ans: 1 },
+        { q: "Semua donor darah diperiksa kesehatannya. Andi tidak diperiksa kesehatannya. Kesimpulan:", opts: ["Andi donor darah sehat", "Andi donor darah sakit", "Andi bukan donor darah", "Andi donor darah yang tertunda", "Tidak dapat disimpulkan"], ans: 2 },
+        { q: "Deret angka: 100, 95, 85, 70, 50, ... Angka berikutnya adalah...", opts: ["25", "30", "20", "35", "15"], ans: 0 },
+        { q: "KAPAL : JANGKAR = MOBIL : ...", opts: ["Rem", "Roda", "Setir", "Kunci", "Spion"], ans: 0 },
+        { q: "Penyelesaian persamaan: 2x + 6 = 20, nilai x adalah...", opts: ["5", "6", "7", "8", "9"], ans: 2 },
+        { q: "Seri huruf: A, Z, B, Y, C, ... Huruf berikutnya adalah...", opts: ["D", "W", "X", "V", "E"], ans: 2 },
+        { q: "Semua kendaraan bermotor menggunakan BBM. Sebagian kendaraan bermotor berroda tiga. Kesimpulan:", opts: ["Semua kendaraan roda tiga menggunakan BBM", "Sebagian kendaraan bermotor berroda tiga menggunakan BBM", "Kendaraan roda tiga tidak menggunakan BBM", "Sebagian kendaraan BBM berroda empat", "Semua kendaraan BBM berroda tiga"], ans: 1 },
+        { q: "MATA : EDITING = TELINGA : ...", opts: ["Mendengar", "Suara", "Musik", "Audisi", "Headphone"], ans: 3 },
+        { q: "Deret angka: 5, 10, 8, 16, 14, 28, ... Angka berikutnya adalah...", opts: ["26", "30", "32", "24", "26"], ans: 0 },
+        { q: "Jika P > Q, Q > R, dan R > S, maka...", opts: ["P < S", "S > P", "P > S", "P = S", "Q < S"], ans: 2 },
+        { q: "KERTAS : PENA = PAPAN TULIS : ...", opts: ["Penghapus", "Penggaris", "Spidol", "Pensil", "Buku"], ans: 2 },
+        { q: "Sinonim kata INSINUASI :", opts: ["Sindiran", "Sanjungan", "Tuduhan", "Bantuan", "Ujaran"], ans: 0 },
+        { q: "Antonim kata PROMISKUITAS :", opts: ["Kebebasan", "Kepatuhan", "Kesetiaan", "Keterikatan", "Penyimpangan"], ans: 2 },
+        { q: "Seri huruf: Z, X, V, T, R, ... Huruf berikutnya adalah...", opts: ["P", "Q", "O", "N", "S"], ans: 0 },
+        { q: "30% dari 150 adalah...", opts: ["35", "40", "45", "50", "55"], ans: 2 },
+        { q: "DINDING : CAT = KAYU : ...", opts: ["Paku", "Gergaji", "Pelitur", "Papan", "Pohon"], ans: 2 },
+        { q: "Deret angka: 1, 4, 9, 16, 25, ... Angka berikutnya adalah...", opts: ["30", "35", "36", "40", "49"], ans: 2 },
+        { q: "Hasil dari (12 x 5) + (40 : 8) = ...", opts: ["62", "63", "64", "65", "66"], ans: 3 },
+        { q: "Pilih bentuk figural lanjutan dari pola rotasi 90 derajat searah jarum jam berikut:", fig: `<svg width="80" height="80"><rect width="80" height="80" fill="#e2e8f0"/><path d="M10 10 L70 10 L40 70 Z" fill="#0b2340"/></svg>`, opts: ["Segitiga menghadap kanan", "Segitiga menghadap kiri", "Segitiga menghadap bawah", "Segitiga terbalik", "Segitiga konkaf"], ans: 0 },
+        { q: "Pilih gambar yang merotasikan persegi dengan satu lingkaran hitam di pojok kanan atas sebesar 180 derajat:", fig: `<svg width="80" height="80"><rect width="80" height="80" fill="#e2e8f0"/><circle cx="60" cy="20" r="10" fill="#0b2340"/></svg>`, opts: ["Lingkaran di pojok kiri bawah", "Lingkaran di pojok kanan bawah", "Lingkaran di pojok kiri atas", "Lingkaran di tengah", "Lingkaran di luar"], ans: 0 },
+        { q: "Berapakah 15% dari 200?", opts: ["25", "30", "35", "40", "45"], ans: 1 },
+        { q: "Seri huruf: B, D, G, K, P, ... Huruf berikutnya adalah...", opts: ["T", "U", "V", "W", "X"], ans: 2 },
+        { q: "KECERDASAN : BELAJAR = KESEHATAN : ...", opts: ["Olahraga", "Dokter", "Obat", "Rumah Sakit", "Kebugaran"], ans: 0 },
+        { q: "Hasil dari √144 + √25 = ...", opts: ["15", "16", "17", "18", "19"], ans: 2 },
+        { q: "Deret angka: 4, 8, 12, 16, 20, ... Angka berikutnya adalah...", opts: ["22", "24", "26", "28", "30"], ans: 1 }
+    ];
+
+    const bankTKP_data = [
+        { q: "Saat Anda memimpin operasi penertiban di lapangan, salah satu kerabat dekat Anda kedapatan melakukan pelanggaran aturan. Tindakan yang paling tepat Anda lakukan adalah...", opts: [{t: "Menegurnya di tempat dan memintanya segera mengurus perizinan sendiri.", s: 3}, {t: "Diserahkan kepada anggota tim lain agar pemeriksaan berjalan objektif.", s: 4}, {t: "Tetap menindak kerabat sesuai prosedur yang berlaku tanpa pandang bulu.", s: 5}, {t: "Memberikan peringatan keras serta dispensasi khusus untuk kali ini saja.", s: 2}, {t: "Pura-pura tidak melihat pelanggaran demi menjaga hubungan kekeluargaan.", s: 1}] },
+        { q: "Rekan kerja satu tim Anda melakukan kekeliruan fatal dalam penyusunan berkas administrasi. Sikap Anda...", opts: [{t: "Melaporkan kejadian ini kepada pimpinan agar diambil tindakan tegas.", s: 3}, {t: "Membantu memperbaiki berkas tersebut bersama-sama dan mengevaluasi perbaikan secara konstruktif.", s: 5}, {t: "Mengambil alih seluruh pengerjaan berkas tanpa melibatkan rekan tersebut lagi.", s: 4}, {t: "Menegurnya dengan keras di hadapan anggota tim lain agar jera.", s: 2}, {t: "Membiarkannya agar ia bertanggung jawab atas kesalahannya sendiri.", s: 1}] },
+        { q: "Seorang warga yang emosional mendatangi kantor pelayanan dan berteriak-teriak karena keluhan layanannya lambat diproses. Tindakan Anda...", opts: [{t: "Meminta petugas keamanan mengamankan warga tersebut keluar ruangan.", s: 2}, {t: "Menjelaskan dengan nada tegas bahwa pelayanan memerlukan prosedur baku.", s: 4}, {t: "Membiarkan warga tersebut meluapkan emosinya hingga mereda sendiri.", s: 3}, {t: "Mendengarkan keluhannya dengan tenang, mengajak ke ruang khusus, dan memeriksa kendala berkasnya.", s: 5}, {t: "Membalas dengan nada keras agar warga tersebut menjaga sopan santun.", s: 1}] },
+        { q: "Institusi Anda menerapkan sistem aplikasi pelaporan berbasis digital yang baru. Banyak senior di unit kerja Anda kesulitan menggunakannya. Sikap Anda...", opts: [{t: "Mempelajari aplikasi tersebut sampai mahir lalu mendampingi dan mengajari rekan senior secara telaten.", s: 5}, {t: "Fokus mengerjakan tugas sendiri menggunakan aplikasi baru tanpa mengurusi rekan lain.", s: 3}, {t: "Mengusulkan kepada pimpinan agar sistem lama tetap digunakan bagi pegawai senior.", s: 2}, {t: "Membantu menginputkan data milik para senior yang kesulitan.", s: 4}, {t: "Menyampaikan kritik bahwa sistem baru terlalu menyulitkan operasional.", s: 1}] },
+        { q: "Dalam sebuah penugasan operasional, Anda ditugaskan dalam piket malam selama 3 hari berturut-turut hingga fisik sangat lelah. Sikap Anda...", opts: [{t: "Menjalankan tugas piket seadanya dan mencuri waktu untuk tidur.", s: 2}, {t: "Tetap menjalankan tugas piket dengan penuh rasa tanggung jawab sambil menjaga kondisi fisik saat istirahat.", s: 5}, {t: "Meminta rekan kerja lain menggantikan posisi Anda secara tidak resmi.", s: 1}, {t: "Melaksanakan tugas dan menyampaikan kondisi fisik kepada atasan agar dipertimbangkan jadwal berikutnya.", s: 4}, {t: "Mengajukan izin sakit agar mendapatkan istirahat penuh.", s: 3}] },
+        { q: "Anda menemukan celah prosedur yang membuat pengolahan anggaran berpotensi bocor. Tindakan Anda...", opts: [{t: "Diam saja karena tidak ingin dimusuhi oleh rekan seangkatan.", s: 1}, {t: "Mendiskusikan celah ini secara internal dan mengajak rekan-rekan mengubah kebiasaan tersebut.", s: 4}, {t: "Menyusun draft usulan perbaikan sistem dan melaporkannya secara resmi kepada pimpinan.", s: 5}, {t: "Melaporkan secara anonim kepada instansi pengawas eksternal.", s: 3}, {t: "Mengikuti kebiasaan yang ada selama tidak mengambil keuntungan pribadi.", s: 2}] },
+        { q: "Ketika memimpin penyuluhan, terdapat sekelompok orang yang secara sengaja memprovokasi atas instansi Anda. Sikap Anda...", opts: [{t: "Menolak menjawab pertanyaan mereka dan langsung mengakhiri acara.", s: 2}, {t: "Melaporkan kelompok tersebut atas tindakan ujaran kebencian.", s: 3}, {t: "Tetap tenang, tidak terpancing emosi, dan memberikan klarifikasi berbasis data objektif secara santun.", s: 5}, {t: "Menyerahkan penanganan provokator kepada tim pengamanan lokasi.", s: 4}, {t: "Debat terbuka dengan nada keras untuk membela nama baik institusi.", s: 1}] },
+        { q: "Anda dipindahkan ke daerah penugasan terpencil dengan fasilitas sangat minim dan kultur budaya berbeda. Sikap Anda...", opts: [{t: "Menjalankan penugasan sambil mengusulkan mutasi kembali secepatnya.", s: 3}, {t: "Menerima keputusan penugasan, segera beradaptasi mempelajari adat lokal serta membangun hubungan baik.", s: 5}, {t: "Melaksanakan tugas seadanya sesuai dengan fasilitas yang tersedia.", s: 2}, {t: "Meminta penundaan waktu keberangkatan dengan alasan persiapan.", s: 4}, {t: "Mengajukan protes kepada atasan atas ketidakadilan lokasi penugasan.", s: 1}] },
+        { q: "Tim Anda gagal mencapai target batas waktu penyelesaian tugas karena kelalaian salah satu anggota. Sikap Anda...", opts: [{t: "Menjelaskan kepada pimpinan bahwa keterlambatan murni disebabkan oleh salah satu anggota.", s: 2}, {t: "Meminta maaf dan berjanji akan menyelesaikan sisa pekerjaan secepatnya.", s: 4}, {t: "Sebagai bagian dari tim, mengakui keterlambatan secara bersama dan menyampaikan langkah perbaikan cepat.", s: 5}, {t: "Menyalahkan alokasi waktu target yang terlalu ketat.", s: 1}, {t: "Mencari alasan di luar teknis tim agar pimpinan memaklumi.", s: 3}] },
+        { q: "Seorang warga menyerahkan amplop berisi sejumlah uang sebagai ucapan terima kasih atas bantuan pelayanan Anda. Tindakan Anda...", opts: [{t: "Menerima uang tersebut karena merasa itu adalah bentuk apresiasi sukarela.", s: 1}, {t: "Menolak uang tersebut secara halus dan menjelaskan bahwa pelayanan merupakan kewajiban tugas tanpa biaya.", s: 5}, {t: "Menolak pemberian uang dan menegur warga tersebut.", s: 3}, {t: "Menjelaskan aturan larangan gratifikasi dan meminta uang tersebut disimpan kembali.", s: 4}, {t: "Menerima uang tersebut lalu memasukkannya ke dalam kotak kas sosial kantor.", s: 2}] },
+        { q: "Anda ditunjuk memimpin proyek kerja kelompok dengan latar belakang anggota yang berbeda. Langkah awal Anda...", opts: [{t: "Membagi tugas secara acak agar seluruh anggota belajar hal baru.", s: 3}, {t: "Mengadakan konsolidasi tim, membagi peran sesuai kompetensi, dan menyepakati komitmen bersama.", s: 5}, {t: "Mengerjakan bagian-bagian paling sulit sendiri agar hasil kerja terjamin.", s: 4}, {t: "Menyuruh setiap anggota memilih pekerjaan yang paling disukai.", s: 2}, {t: "Menyerahkan alur kerja kepada kesepakatan anggota tanpa arahan ketat.", s: 1}] },
+        { q: "Usulan strategis yang sudah Anda persiapkan secara matang ditolak oleh atasan dalam rapat. Sikap Anda...", opts: [{t: "Mempertahankan gagasan tersebut secara sengit dengan argumen keras.", s: 2}, {t: "Merasa kecewa dan memilih pasif dalam diskusi rapat selanjutnya.", s: 1}, {t: "Mencari tahu alasan di balik penolakan tersebut di luar jam rapat.", s: 4}, {t: "Menerima keputusan penolakan secara lapang dada, menanyakan letak kekurangan, dan siap memperbaikinya.", s: 5}, {t: "Mengubah usulan tersebut sesuai arahan atasan tanpa bertanya lagi.", s: 3}] },
+        { q: "Atasan memberikan instruksi kerja yang berbenturan dengan nilai kode etik profesi Anda. Tindakan Anda...", opts: [{t: "Menyampaikan keberatan secara sopan dan privat serta memberikan opsi solusi sesuai peraturan formal.", s: 5}, {t: "Menolak instruksi tersebut secara tegas di depan rapat dinas.", s: 3}, {t: "Melaksanakan perintah tersebut karena mengutamakan hirarki kepemimpinan.", s: 1}, {t: "Melaporkan indikasi instruksi bermasalah ini ke pengawasan internal.", s: 4}, {t: "Pura-pura tidak mendengar perintah dan menunda pengerjaannya.", s: 2}] },
+        { q: "Divisi Anda diwajibkan menggunakan software pengolahan data baru. Sebagian anggota kesulitan. Tindakan Anda...", opts: [{t: "Mengikuti pelatihan resmi jika diperintahkan oleh kantor.", s: 3}, {t: "Membantu pengerjaan tugas rekan-rekan yang lambat mempelajari sistem baru.", s: 4}, {t: "Menguasai software tersebut secara mandiri dan membagikan modul ringkas untuk memudahkan rekan lain.", s: 5}, {t: "Meminta atasan menyediakan waktu pengujian sistem yang lebih panjang.", s: 2}, {t: "Menunggu rekan lain mempelajari sistem baru baru kemudian ikut belajar.", s: 1}] },
+        { q: "Anda mendapatkan kritik pedas mengenai hasil laporan kerja di depan banyak orang. Sikap Anda...", opts: [{t: "Langsung membalas dengan membeberkan kekurangan laporan kerja rekan tersebut.", s: 1}, {t: "Mengabaikan kritikan tersebut karena disampaikan di tempat yang tidak tepat.", s: 2}, {t: "Mendengarkan kritik dengan emosi stabil, mencatat poin penting, dan mengklarifikasi jika ada fakta salah.", s: 5}, {t: "Meminta rekan tersebut menyampaikan kritikannya secara pribadi setelah acara.", s: 4}, {t: "Merasa tersinggung dan memilih meninggalkan ruangan rapat.", s: 3}] },
+        { q: "Dikejar deadline laporan 1 jam lagi, saat bersamaan atasan meminta bantuan mendesak. Sikap Anda...", opts: [{t: "Meninggalkan laporan utama demi mengerjakan instruksi atasan terlebih dahulu.", s: 3}, {t: "Menjelaskan posisi deadline laporan secara cepat, lalu mengusulkan pembagian waktu atau koordinasi bantuan.", s: 5}, {t: "Menolak secara langsung perintah mendadak atasan karena sedang sibuk.", s: 2}, {t: "Mengerjakan tugas atasan secepat mungkin baru melanjutkan laporan tertunda.", s: 4}, {t: "Meminta teman menggantikan pengerjaan tugas atasan.", s: 1}] },
+        { q: "Organisasi Anda dihadapkan pada perubahan regulasi pemerintah yang merombak alur kerja. Sikap Anda...", opts: [{t: "Mengikuti saja alur perubahan yang diperintahkan institusi secara pasif.", s: 3}, {t: "Menunggu instruksi rinci dari pimpinan sebelum melakukan tindakan penyesuaian.", s: 4}, {t: "Mengkritik regulasi baru karena menambah beban administrasi.", s: 2}, {t: "Menyikapi positif perubahan tersebut, mempelajari regulasi baru, dan menyesuaikan alur kerja secara proaktif.", s: 5}, {t: "Tetap memakai alur kerja lama selama alur kerja baru belum siap sepenuhnya.", s: 1}] },
+        { q: "Konflik internal terjadi antara dua bawahan Anda hingga mengganggu kinerja tim. Tindakan Anda...", opts: [{t: "Memberikan sanksi teguran tertulis kepada keduanya tanpa perlu mendengar keluhan.", s: 2}, {t: "Memanggil kedua belah pihak, memediasi secara objektif, dan memfokuskan kembali pada target profesional bersama.", s: 5}, {t: "Membiarkan mereka menyelesaikan masalah pribadi secara mandiri.", s: 1}, {t: "Mendengarkan keterangan masing-masing pihak secara terpisah sebelum mengambil tindakan.", s: 4}, {t: "Memindahkan salah satu staf ke unit kerja lain.", s: 3}] },
+        { q: "Anda dipercaya mengelola dana operasional kegiatan lapangan. Cara Anda menjaga transparansi...", opts: [{t: "Menyimpan bukti transaksi dan melaporkannya jika diminta oleh bendahara.", s: 3}, {t: "Mencatat setiap pengeluaran secara rinci, melampirkan bukti sah, dan mempublikasikan laporan ke anggota tim.", s: 5}, {t: "Melaporkan rekap anggaran secara umum pada akhir pengerjaan proyek.", s: 4}, {t: "Menyerahkan pengelolaan dana sepenuhnya kepada staf bawahan.", s: 2}, {t: "Menggunakan dana sesuai prioritas tanpa membuat pencatatan kecil yang rumit.", s: 1}] },
+        { q: "Seorang warga memberikan kritik buruk mengenai pelayanan Anda melalui media sosial hingga viral. Sikap Anda...", opts: [{t: "Meminta pembuat postingan menghapus kritikannya di media sosial.", s: 2}, {t: "Melakukan pembelaan resmi melalui akun pribadi dengan menyanggah tuduhan warga.", s: 1}, {t: "Menjadikan kritik tersebut sebagai evaluasi diri tim, melakukan kroscek lapangan, dan memperbaiki kualitas layanan.", s: 5}, {t: "Menyerahkan penanganan sepenuhnya kepada unit kehumasan institusi.", s: 4}, {t: "Mengacuhkan postingan tersebut karena media sosial kerap dibumbui hoaks.", s: 3}] },
+        { q: "Cara Anda mengelola waktu antara kesibukan dinas yang padat dengan pengembangan kompetensi pribadi...", opts: [{t: "Fokus penuh pada penugasan dinas dan menunda belajar sampai jadwal senggang.", s: 4}, {t: "Membuat skala prioritas kerja yang ketat dan memanfaatkan waktu luang untuk belajar mandiri.", s: 5}, {t: "Mengikuti pengembangan kompetensi hanya jika diperintahkan instansi secara resmi.", s: 3}, {t: "Menggunakan jam dinas senggang untuk pengerjaan tugas pelatihan mandiri.", s: 2}, {t: "Meminta pengurangan beban dinas agar bisa fokus pada kursus pribadi.", s: 1}] },
+        { q: "Di unit pelayanan umum, ada rombongan pejabat daerah yang meminta diutamakan antriannya. Tindakan Anda...", opts: [{t: "Melayani pejabat tersebut terlebih dahulu demi menjaga hubungan baik.", s: 1}, {t: "Mengarahkan pejabat ke ruang tamu khusus sambil menunggu nomor antrian dipanggil.", s: 4}, {t: "Menjelaskan prosedur antrian dengan sopan bahwa semua warga diperlakukan sama sesuai nomor urut.", s: 5}, {t: "Menyerahkan keputusan pelayanan pejabat tersebut kepada kepala unit.", s: 3}, {t: "Meminta izin kepada warga lain untuk mendahulukan rombongan pejabat.", s: 2}] },
+        { q: "Rekan Anda menyarankan memakai data lama yang dimodifikasi agar rencana operasional cepat selesai. Sikap Anda...", opts: [{t: "Menggunakan data lama yang dimodifikasi sedikit agar terlihat baru.", s: 1}, {t: "Berkonsultasi dengan pimpinan mengenai batas waktu dan kebutuhan keakuratan data.", s: 4}, {t: "Mengikuti saran rekan untuk menghemat alokasi waktu analisis.", s: 2}, {t: "Menolak saran tersebut dan tetap melakukan pengumpulan data terbaru walau butuh waktu ekstra.", s: 5}, {t: "Menggunakan data seadanya yang mudah dijangkau dalam waktu singkat.", s: 3}] },
+        { q: "Melihat standar keselamatan kerja (K3) sering diabaikan oleh para anggota di lapangan, tindakan Anda...", opts: [{t: "Membiarkan hal itu karena merasa anggota lain sudah berpengalaman.", s: 1}, {t: "Mengingatkan pentingnya keselamatan kerja, memberi contoh langsung, dan melaporkannya pada pengawas K3.", s: 5}, {t: "Menegur keras anggota yang lalai di tempat lokasi kerja.", s: 3}, {t: "Mengusulkan pelatihan penyegaran keselamatan kerja secara berkala kepada atasan.", s: 4}, {t: "Tetap mematuhi K3 untuk diri sendiri tanpa mencampuri urusan anggota lain.", s: 2}] },
+        { q: "Saat memimpin rapat, perbedaan pendapat tajam terjadi hingga suasana memanas. Sikap Anda...", opts: [{t: "Memutus secara sepihak opsi mana yang dipakai tanpa mendengarkan perdebatan.", s: 3}, {t: "Mengarahkan sesi voting secara langsung untuk menentukan pemenang pendapat.", s: 4}, {t: "Mendinginkan suasana, menarik persamaan dari ide kedua pihak, dan memfasilitasi pengambilan solusi tengah.", s: 5}, {t: "Menunda rapat sampai emosi para peserta mereda di hari berikutnya.", s: 2}, {t: "Membiarkan kedua pihak berdebat sampai salah satu pihak mengalah sendiri.", s: 1}] },
+        { q: "Atasan meminta meloloskan salah satu peserta yang tidak memenuhi syarat verifikasi berkas. Tindakan Anda...", opts: [{t: "Mengikuti instruksi atasan karena merasa itu adalah tanggung jawab beliau.", s: 1}, {t: "Menyerahkan proses verifikasi berkas peserta tersebut langsung kepada atasan.", s: 4}, {t: "Melaporkan kejadian ini kepada unit pengawas internal institusi secara tertulis.", s: 3}, {t: "Menolak permintaan tersebut dengan sopan dan memberikan penjelasan aturan secara objektif kepada atasan.", s: 5}, {t: "Meloloskan berkas tersebut namun memberi catatan khusus kekurangan syaratnya.", s: 2}] },
+        { q: "Cara Anda memotivasi staf bawahan yang menunjukkan penurunan kinerja akibat masalah pribadi...", opts: [{t: "Memberikan teguran resmi agar staf tidak mencampuradukkan masalah pribadi dan pekerjaan.", s: 2}, {t: "Melakukan pendekatan empati pribadi, mendengarkan masalahnya, dan memberikan dukungan penyesuaian kerja.", s: 5}, {t: "Membiarkannya hingga staf tersebut menyelesaikan masalah pribadinya sendiri.", s: 1}, {t: "Mengarahkan staf untuk mengkonsultasikan masalahnya kepada konselor institusi.", s: 4}, {t: "Memberikan keringanan waktu kerja tanpa batas hingga kondisi staf pulih.", s: 3}] },
+        { q: "Anda menemukan sistem proteksi data digital di unit Anda rentan disusupi. Tindakan proaktif Anda...", opts: [{t: "Memperbaiki sendiri celah keamanan IT tersebut tanpa berkoordinasi.", s: 3}, {t: "Segera membuat laporan rincian ancaman keamanan IT dan menyerahkan rekomendasi solusi perbaikan pada divisi Siber.", s: 5}, {t: "Mengamankan berkas-berkas penting pribadi terlebih dahulu.", s: 2}, {t: "Mengingatkan rekan sejawat agar lebih berhati-hati saat berselancar di internet.", s: 4}, {t: "Membiarkannya hingga terjadi insiden pencurian data secara nyata.", s: 1}] },
+        { q: "Menjaga batas integritas saat berteman dekat dengan wartawan media massa, sikap Anda...", opts: [{t: "Menjauhi wartawan tersebut demi menghindari kecurigaan instansi.", s: 2}, {t: "Memberikan informasi kerahasiaan secara terbatas demi menjaga keakraban.", s: 1}, {t: "Selalu berkonsultasi dengan unit humas sebelum melakukan pertemuan informal.", s: 4}, {t: "Tetap menjalin hubungan profesional namun tegas tidak membuka rahasia dinas di luar prosedur kehumasan.", s: 5}, {t: "Menjadikan teman wartawan sebagai sarana pencitraan pribadi.", s: 3}] },
+        { q: "Peralatan utama kerja mengalami kerusakan mendadak saat penugasan penting. Tindakan pertama Anda...", opts: [{t: "Melaporkan kerusakan pada teknisi dan menghentikan pekerjaan sampai alat selesai diperbaiki.", s: 3}, {t: "Tetap tenang, mencari alternatif peralatan cadangan atau cara manual yang aman agar tugas tidak terhenti.", s: 5}, {t: "Menyalahkan petugas pemeliharaan alat yang tidak sigap merawat barang.", s: 1}, {t: "Mencari pinjaman peralatan kerja dari unit instansi sebelah.", s: 4}, {t: "Menunggu instruksi atasan mengenai langkah penanganan alat rusak.", s: 2}] },
+        { q: "Diperintahkan menghadiri sosialisasi kebijakan baru yang kurang relevan dengan tugas harian, sikap Anda...", opts: [{t: "Datang sekedar memenuhi daftar hadir lalu menyempatkan pengerjaan tugas lain.", s: 2}, {t: "Meminta rekan lain menggantikan kehadiran Anda dalam sosialisasi tersebut.", s: 1}, {t: "Tetap menghadiri acara dengan penuh perhatian dan mencoba memahami perspektif luas kebijakan baru.", s: 5}, {t: "Menghadiri acara dan mengajukan pertanyaan kritis mengenai relevansi kebijakan baru.", s: 4}, {t: "Mendengarkan sosialisasi seadanya tanpa melakukan pencatatan materi.", s: 3}] },
+        { q: "Rekan kerja sering mengunggah postingan media sosial yang mendiskreditkan kebijakan kantor. Sikap Anda...", opts: [{t: "Melaporkan akun media sosial rekan tersebut langsung ke unit etika.", s: 4}, {t: "Mengomentari postingan tersebut di media sosial untuk debat terbuka.", s: 1}, {t: "Menegurnya secara pribadi, mengingatkan etika dan ikatan aturan publik pegawai institusi.", s: 5}, {t: "Mengabaikan hal itu karena merasa itu adalah hak kebebasan berpendapat.", s: 2}, {t: "Mendiskusikan perilaku rekan tersebut dengan anggota kelompok kerja lainnya.", s: 3}] },
+        { q: "Mengkoordinir kegiatan bakti sosial dengan anggaran sangat terbatas, strategi Anda...", opts: [{t: "Mengurangi target cakupan masyarakat penerima bantuan.", s: 3}, {t: "Menyusun alokasi anggaran yang efisien, memprioritaskan manfaat utama, dan membangun kemitraan sponsorship yang sah.", s: 5}, {t: "Mengajukan penambahan dana darurat ke pimpinan tanpa membuat penyesuaian alokasi.", s: 2}, {t: "Meminta partisipasi iuran tambahan sukarela dari internal anggota tim.", s: 4}, {t: "Melaksanakan acara seadanya sesuai ketersediaan anggaran minimal.", s: 1}] },
+        { q: "Dokumen pendukung kecil kurang pada berkas pemohon perizinan. Tindakan Anda...", opts: [{t: "Langsung meloloskan izin tersebut karena kasihan pada pemohon.", s: 1}, {t: "Tetap meminta pemohon melengkapi syarat dokumen tersebut sambil membantu mengarahkan alur pemenuhannya secara cepat.", s: 5}, {t: "Menolak seluruh permohonan dan meminta pemohon mengulang dari awal.", s: 3}, {t: "Berkonsultasi dengan atasan apakah syarat kecil tersebut mendapat pertimbangan pengecualian.", s: 4}, {t: "Menahan berkas permohonan tanpa kejelasan sampai pemohon sadar.", s: 2}] },
+        { q: "Mendapatkan intimidasi verbal dari oknum tertentu saat pemeriksaan lapangan. Sikap Anda...", opts: [{t: "Membawa emosi dan membalas gertakan oknum tersebut agar tidak dianggap lemah.", s: 1}, {t: "Menghentikan pemeriksaan dan langsung pergi meninggalkan lokasi.", s: 2}, {t: "Tetap tenang, tidak terprovokasi, menjalankan tugas sesuai SOP, dan berkoordinasi dengan tim pengamanan bila ada ancaman fisik.", s: 5}, {t: "Menhubungi atasan untuk melaporkan adanya ancaman intimidasi.", s: 4}, {t: "Merekam aksi intimidasi tersebut secara diam-diam untuk bukti hukum.", s: 3}] },
+        { q: "Frekuensi Anda dalam melakukan evaluasi mandiri terhadap kualitas kinerja...", opts: [{t: "Melakukan evaluasi hanya jika hasil kinerja mendapatkan teguran dari atasan.", s: 2}, {t: "Melakukan evaluasi jika ada waktu senggang saja.", s: 3}, {t: "Selalu secara rutin di akhir tugas untuk menemukan area pengembangan dan mencegah kesalahan.", s: 5}, {t: "Melakukan evaluasi bersama tim saat rapat berkala organisasi.", s: 4}, {t: "Jarang melakukan evaluasi karena merasa pengerjaan tugas sudah sesuai prosedur.", s: 1}] },
+        { q: "Diberi tanggung jawab mengarahkan staf magang tanpa pengalaman kerja sama sekali, langkah Anda...", opts: [{t: "Memberikan tugas-tugas ringan tanpa perlu banyak arahan.", s: 2}, {t: "Membuat rencana bimbingan terstruktur, memberikan petunjuk jelas, serta memantau perkembangan mereka secara bertahap.", s: 5}, {t: "Menyuruh staf magang mengamati cara kerja Anda tanpa penjelasan rinci.", s: 3}, {t: "Menyerahkan bimbingan staf magang kepada rekan staf senior lainnya.", s: 4}, {t: "Memberikan tugas berat langsung untuk menguji ketahanan mental mereka.", s: 1}] },
+        { q: "Salah seorang anggota tim sering datang terlambat dan mengganggu irama kerja bersama. Tindakan Anda...", opts: [{t: "Melaporkan keterlambatannya secara langsung pada bagian kedisiplinan.", s: 4}, {t: "Mengajaknya berbicara secara personal, menanyakan kendala keterlambatannya, dan menegaskan dampaknya bagi tim.", s: 5}, {t: "Acuh tak acuh karena urusan kedisiplinan adalah kewenangan atasan.", s: 1}, {t: "Menyindir perilakunya di depan forum anggota tim lainnya.", s: 2}, {t: "Membantu mengerjakan porsi tugas anggota yang terlambat tersebut.", s: 3}] },
+        { q: "Prinsip saat terjadi sengketa informasi publik antara institusi dengan masyarakat...", opts: [{t: "Menutup rapat-rapat semua akses informasi institusi demi keamanan.", s: 1}, {t: "Mengedepankan keterbukaan informasi publik sesuai undang-undang dengan tetap menjaga rahasia negara.", s: 5}, {t: "Menyerahkan seluruh berkas informasi yang diminta masyarakat tanpa filter kerahasiaan.", s: 2}, {t: "Mendorong penyelesaian sengketa melalui jalur musyawarah kehumasan.", s: 4}, {t: "Menunggu putusan pengadilan sebelum memberikan informasi apapun.", s: 3}] },
+        { q: "Menyelesaikan penugasan analisis yang butuh pencermatan tinggi saat ruangan bising...", opts: [{t: "Menegur rekan-rekan yang bising dengan nada tinggi.", s: 2}, {t: "Menunda pengerjaan tugas analisis sampai situasi ruangan kembali tenang.", s: 3}, {t: "Mencari ruangan kosong lain yang tenang di area kantor untuk melanjutkan kerja.", s: 4}, {t: "Menjaga fokus pikiran, mengkondisikan ruang kerja sementara atau menggunakan penyumbat telinga.", s: 5}, {t: "Mengeluhkan kondisi ruangan pada bagian rumah tangga kantor.", s: 1}] },
+        { q: "Rekan dinas menggunakan kendaraan operasional kantor untuk liburan pribadi, tindakan Anda...", opts: [{t: "Melaporkan tindakan penyalahgunaan aset tersebut ke pengawas.", s: 4}, {t: "Mengingatkan secara baik-baik bahwa fasilitas kantor tidak boleh dipergunakan untuk kepentingan pribadi.", s: 5}, {t: "Diam saja karena merasa itu bukan urusan pribadi saya.", s: 1}, {t: "Ikut serta memanfaatkan fasilitas tersebut bila ada kesempatan.", s: 2}, {t: "Menyindir rekan tersebut di dalam grup pertemanan dinas.", s: 3}] },
+        { q: "Bencana banjir menghadang jalur kegiatan operasional tim di lapangan. Sikap Anda...", opts: [{t: "Mengutamakan keselamatan jiwa anggota tim, mengubah rencana ke opsi darurat, dan berkoordinasi dengan tim SAR.", s: 5}, {t: "Meneruskan kegiatan utama meski risiko bahaya melingkupi anggota tim.", s: 1}, {t: "Membatalkan seluruh rangkaian kegiatan dan langsung memerintahkan anggota kembali.", s: 3}, {t: "Menunggu arahan instruksi komando pusat sebelum mengambil keputusan.", s: 4}, {t: "Memerintahkan anggota berteduh sampai banjir mereda tanpa batas waktu jelas.", s: 2}] },
+        { q: "Menginternalisasikan nilai integritas ASN/Pelayan Publik dalam kehidupan harian...", opts: [{t: "Menjaga integritas hanya ketika sedang mengenakan seragam dinas resmi.", s: 2}, {t: "Menjadikan norma etika dan kebenaran hukum sebagai pedoman utama dalam berperilaku di dalam maupun luar tugas.", s: 5}, {t: "Menerapkan nilai integritas sejauh hal tersebut tidak merugikan karier.", s: 1}, {t: "Selalu berusaha konsisten antara ucapan dan tindakan serta menjadi teladan.", s: 4}, {t: "Mengikuti instruksi dan budaya integritas yang berlaku di unit kerja.", s: 3}] },
+        { q: "Mendapat penghargaan atas keberhasilan proyek tim yang Anda pimpin, sikap Anda...", opts: [{t: "Menerima pujian tersebut sebagai bentuk pengakuan kapasitas kepemimpinan pribadi.", s: 2}, {t: "Menerima pujian dengan rendah hati dan menyampaikan bahwa keberhasilan ini merupakan kerja keras tim.", s: 5}, {t: "Membagikan sebagian bonus hadiah penghargaan kepada para anggota tim.", s: 4}, {t: "Menolak penghargaan tersebut karena merasa pengerjaan proyek belum sempurna.", s: 3}, {t: "Merayakan keberhasilan proyek pribadi bersama rekan pimpinan lain.", s: 1}] },
+        { q: "Orientasi utama seorang pelayan publik dalam bertugas adalah...", opts: [{t: "Menjalankan seluruh instruksi pimpinan tanpa membantah demi menjaga hirarki komando.", s: 3}, {t: "Memberikan pengabdian terbaik demi keamanan, ketertiban, dan keadilan bagi masyarakat berbasis hukum.", s: 5}, {t: "Bekerja secara cermat untuk meraih jenjang karir dan kepangkatan yang tinggi.", s: 2}, {t: "Menjaga nama baik institusi dari segala bentuk ancaman dan citra negatif.", s: 4}, {t: "Mencari nafkah yang halal dan aman bagi kesejahteraan keluarga pribadi.", s: 1}] }
+    ];
+
+    let bankSKD = [];
+    let currentQ = 0;
+    let userAnswers = {};
+    let timerInterval;
+
+    // Security Helper: Auto-Shuffle
+    function shuffleArray(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // Security Helper: Encrypt
+    function encryptData(dataObj) {
+        const str = JSON.stringify(dataObj);
+        const bytes = new TextEncoder().encode(str);
+        return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const prepareQuestions = (data, type) => {
+            return data.map(item => {
+                let newItem = { ...item, type };
+                if (type === 'TKP') {
+                    let optsWithOrig = item.opts.map((o, idx) => ({ ...o, origIdx: idx }));
+                    newItem.shuffledOpts = shuffleArray(optsWithOrig);
+                } else {
+                    let optsWithOrig = item.opts.map((o, idx) => ({ text: o, isAns: idx === item.ans }));
+                    let shuffled = shuffleArray(optsWithOrig);
+                    newItem.shuffledOpts = shuffled.map(s => s.text);
+                    newItem.newAns = shuffled.findIndex(s => s.isAns);
+                }
+                return newItem;
+            });
+        };
+
+        const twkMapped = prepareQuestions(bankTWK_data, 'TWK');
+        const tiuMapped = prepareQuestions(bankTIU_data, 'TIU');
+        const tkpMapped = prepareQuestions(bankTKP_data, 'TKP');
+
+        bankSKD = [...twkMapped, ...tiuMapped, ...tkpMapped];
+
+        renderNav();
+        loadQ(0);
+        startTimer(100 * 60);
+    });
+
+    function loadQ(idx) {
+        currentQ = idx;
+        const qData = bankSKD[idx];
+        
+        document.getElementById('cat-badge').innerText = qData.type;
+        document.getElementById('q-no').innerText = `Soal ${idx + 1} dari 110`;
+        document.getElementById('q-text').innerText = qData.q;
+        
+        const figCont = document.getElementById('q-fig');
+        if(qData.fig) {
+            figCont.innerHTML = qData.fig;
+            figCont.style.display = 'block';
+        } else {
+            figCont.style.display = 'none';
+            figCont.innerHTML = '';
+        }
+
+        let html = '';
+        const optsToRender = qData.shuffledOpts || qData.opts;
+        optsToRender.forEach((opt, i) => {
+            const isSelected = userAnswers[idx] === i ? 'selected' : '';
+            const txt = typeof opt === 'object' ? opt.t : opt;
+            html += `<div class="opt ${isSelected}" onclick="selectOpt(${i})">${String.fromCharCode(65+i)}. ${txt}</div>`;
+        });
+        document.getElementById('options').innerHTML = html;
+        document.getElementById('btn-next').innerText = idx === bankSKD.length - 1 ? "Selesai" : "Selanjutnya";
+        renderNav();
+    }
+
+    function selectOpt(optIdx) {
+        userAnswers[currentQ] = optIdx;
+        loadQ(currentQ);
+        setTimeout(() => { nextQ(); }, 250);
+    }
+
+    function renderNav() {
+        let html = '';
+        for(let i = 0; i < bankSKD.length; i++) {
+            let cls = 'nav-item';
+            if(userAnswers[i] !== undefined) cls += ' filled';
+            if(i === currentQ) cls += ' active';
+            html += `<div class="${cls}" onclick="loadQ(${i})">${i + 1}</div>`;
+        }
+        document.getElementById('navGrid').innerHTML = html;
+    }
+
+    function nextQ() {
+        if(currentQ === bankSKD.length - 1) {
+            if(confirm("Apakah Anda yakin ingin menyelesaikan Simulasi SKD Lengkap ini?")) finishTest();
+            return;
+        }
+        loadQ(currentQ + 1);
+    }
+
+    function prevQ() {
+        if(currentQ > 0) loadQ(currentQ - 1);
+    }
+
+    function startTimer(seconds) {
+        let t = seconds;
+        timerInterval = setInterval(() => {
+            let m = Math.floor(t / 60);
+            let s = t % 60;
+            document.getElementById('timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            if(--t < 0) {
+                clearInterval(timerInterval);
+                finishTest();
+            }
+        }, 1000);
+    }
+
+    function finishTest() {
+        clearInterval(timerInterval);
+        
+        let twkB = 0, twkS = 0, twkK = 0;
+        let twkPembahasan = [];
+        for(let i=0; i<30; i++) {
+            const q = bankSKD[i];
+            const uAns = userAnswers[i];
+            const correctIdx = q.newAns !== undefined ? q.newAns : q.ans;
+            const isCorrect = uAns === correctIdx;
+            
+            if(uAns === undefined) twkK++;
+            else if(isCorrect) twkB++;
+            else twkS++;
+
+            const opts = q.shuffledOpts || q.opts;
+            twkPembahasan.push({
+                soal: q.q,
+                jawabanUser: uAns !== undefined ? `${String.fromCharCode(65+uAns)}. ${opts[uAns]}` : 'Tidak Dijawab',
+                kunci: `${String.fromCharCode(65+correctIdx)}. ${opts[correctIdx]}`,
+                isCorrect: isCorrect,
+                penjelasan: 'Soal TWK menguji wawasan kebangsaan dan nilai Pancasila.'
+            });
+        }
+
+        let tiuB = 0, tiuS = 0, tiuK = 0;
+        let tiuPembahasan = [];
+        for(let i=30; i<65; i++) {
+            const q = bankSKD[i];
+            const uAns = userAnswers[i];
+            const correctIdx = q.newAns !== undefined ? q.newAns : q.ans;
+            const isCorrect = uAns === correctIdx;
+
+            if(uAns === undefined) tiuK++;
+            else if(isCorrect) tiuB++;
+            else tiuS++;
+
+            const opts = q.shuffledOpts || q.opts;
+            tiuPembahasan.push({
+                soal: q.q,
+                jawabanUser: uAns !== undefined ? `${String.fromCharCode(65+uAns)}. ${opts[uAns]}` : 'Tidak Dijawab',
+                kunci: `${String.fromCharCode(65+correctIdx)}. ${opts[correctIdx]}`,
+                isCorrect: isCorrect,
+                penjelasan: 'Soal TIU menguji penalaran verbal, numerik, dan figural.'
+            });
+        }
+
+        let tkpSkor = 0, tkpD = 0, tkpK = 0;
+        let tkpPembahasan = [];
+        for(let i=65; i<110; i++) {
+            const q = bankSKD[i];
+            const uAns = userAnswers[i];
+            const opts = q.shuffledOpts || q.opts;
+
+            if(uAns === undefined) {
+                tkpK++;
+                tkpPembahasan.push({
+                    soal: q.q,
+                    jawabanUser: 'Tidak Dijawab',
+                    kunci: 'Opsi Skor 5',
+                    isCorrect: false,
+                    penjelasan: 'Pilih opsi yang mencerminkan profesionalisme tinggi.'
+                });
+            } else {
+                tkpD++;
+                const selectedOpt = opts[uAns];
+                tkpSkor += selectedOpt.s;
+                tkpPembahasan.push({
+                    soal: q.q,
+                    jawabanUser: `${String.fromCharCode(65+uAns)}. ${selectedOpt.t} (Skor: ${selectedOpt.s})`,
+                    kunci: 'Evaluasi berdasarkan indikator sikap kerja.',
+                    isCorrect: selectedOpt.s === 5,
+                    penjelasan: 'Opsi dengan skor tertinggi menunjukkan karakter kepemimpinan dan pelayanan terbaik.'
+                });
+            }
+        }
+
+        let resData = {
+            twk: { benar: twkB, salah: twkS, kosong: twkK, score: twkB * 5, max: 150, pembahasan: twkPembahasan },
+            tiu: { benar: tiuB, salah: tiuS, kosong: tiuK, score: tiuB * 5, max: 175, pembahasan: tiuPembahasan },
+            tkp: { dijawab: tkpD, kosong: tkpK, score: tkpSkor, max: 225, pembahasan: tkpPembahasan },
+            timestamp: Date.now()
+        };
+
+        const encrypted = encryptData(resData);
+        localStorage.setItem('PRC_SKD_RESULT_ENC', encrypted);
+        localStorage.setItem('PRC_SKD_RESULT', JSON.stringify(resData));
+
+        alert("Simulasi SKD Lengkap Selesai!\nHasil akhir Anda telah tersimpan secara aman.");
+        window.location.href = 'rekap_nilai.html';
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tes Intelegensia Umum (TIU) - 35 Soal HOTS</title>
+    <style>
+        :root { --navy: #0b2340; --gold: #d4a017; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #1e293b; -webkit-user-select: none; user-select: none; }
+        header { background: var(--navy); color: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--gold); }
+        .container { max-width: 950px; margin: 20px auto; padding: 0 15px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .opt { padding: 14px; margin: 8px 0; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .opt:hover { background: #f1f5f9; border-color: var(--navy); }
+        .opt.selected { background: #e0f2fe; border-color: var(--navy); font-weight: bold; }
+        .nav-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 15px; }
+        .nav-item { height: 35px; display: flex; align-items: center; justify-content: center; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .nav-item.filled { background: var(--navy); color: white; }
+        .nav-item.active { border: 2px solid var(--gold); }
+        .btn { background: var(--navy); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #timer { font-size: 20px; font-weight: bold; color: var(--gold); font-family: monospace; }
+        .fig-box { text-align: center; margin: 15px 0; }
+    </style>
+</head>
+<body oncontextmenu="return false">
+
+<div class="container">
+    <header>
+        <div><b>TES INTELEGENSIA UMUM (TIU)</b> | 35 SOAL HOTS</div>
+        <div id="timer">35:00</div>
+    </header>
+
+    <div style="display:flex; gap:20px; margin-top:20px; flex-wrap: wrap;">
+        <div style="flex:3; min-width:300px;">
+            <div class="card">
+                <div id="q-no" style="font-weight:bold; color:var(--navy); margin-bottom:10px;">Soal 1 dari 35</div>
+                <div id="q-text" style="font-size:15px; line-height:1.6; margin-bottom:15px;"></div>
+                <div id="q-fig" class="fig-box"></div>
+                <div id="options"></div>
+                <div style="margin-top:25px; display:flex; justify-content:space-between;">
+                    <button class="btn" onclick="prevQ()" style="background:#64748b">Sebelumnya</button>
+                    <button class="btn" id="btn-next" onclick="nextQ()">Selanjutnya</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="flex:1; min-width:250px;">
+            <div class="card" style="padding:15px;">
+                <div style="text-align:center; font-size:12px; font-weight:bold; margin-bottom:10px;">NAVIGASI SOAL</div>
+                <div id="navGrid" class="nav-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const rawTIU = [
+        { q: "REBOISASI : HUJAN = ... : ...", opts: ["Preservasi : Pengawetan", "Imunisasi : Kekebalan", "Penanaman : Pohon", "Erosi : Banjir", "Evakuasi : Korban"], ans: 1, p: "Reboisasi bertujuan menghasilkan/meningkatkan hujan; Imunisasi bertujuan menghasilkan/meningkatkan kekebalan." },
+        { q: "Semua polisi berbadan tegap. Sebagian polisi adalah penembak jitu. Kesimpulan yang benar adalah...", opts: ["Semua yang berbadan tegap adalah penembak jitu", "Sebagian penembak jitu berbadan tegap", "Semua penembak jitu adalah polisi berbadan tegap", "Sebagian polisi tidak berbadan tegap", "Tidak ada polisi penembak jitu yang berbadan tegap"], ans: 1, p: "Karena sebagian polisi adalah penembak jitu dan semua polisi berbadan tegap, maka sebagian penembak jitu berbadan tegap." },
+        { q: "Deret angka: 3, 7, 15, 31, 63, ... Angka berikutnya adalah...", opts: ["127", "125", "126", "128", "130"], ans: 0, p: "Pola: (n * 2) + 1. Maka (63 * 2) + 1 = 127." },
+        { q: "Jika A > B dan B = C, sementara C < D, maka kesimpulan yang pasti adalah...", opts: ["A > D", "A < D", "A = D", "B < D", "A dan D tidak dapat ditentukan tetapi B < D"], ans: 4, p: "Karena B = C dan C < D, maka B < D. Hubungan A dan D tidak dapat ditentukan secara pasti." },
+        { q: "MOBIL : BENSIN = PELARI : ...", opts: ["Sepatu", "Lintasan", "Makanan", "Oksigen", "Lari"], ans: 2, p: "Mobil membutuhkan bensin sebagai sumber energi; Pelari membutuhkan makanan sebagai sumber energi." },
+        { q: "Seri huruf: C, F, I, L, O, ... Huruf berikutnya adalah...", opts: ["P", "Q", "R", "S", "T"], ans: 2, p: "Pola lompat 3 huruf: C(+3)=F, F(+3)=I, I(+3)=L, L(+3)=O, O(+3)=R." },
+        { q: "Semua mahasiswa peserta ujian membawa kartu ujian. Sebagian peserta ujian mengenakan kemeja putih. Kesimpulannya...", opts: ["Semua peserta berkemeja putih membawa kartu ujian", "Sebagian mahasiswa peserta ujian mengenakan kemeja putih dan membawa kartu ujian", "Semua yang membawa kartu ujian adalah mahasiswa berkemeja putih", "Sebagian peserta ujian tidak membawa kartu ujian", "Mahasiswa tidak berkemeja putih tidak membawa kartu ujian"], ans: 1, p: "Penggabungan sebagian peserta berkemeja putih dengan seluruh mahasiswa yang membawa kartu ujian." },
+        { q: "KAMPUNG : DESA = KOTA : ...", opts: ["Metropolis", "Provinsi", "Negara", "Dusun", "Wilayah"], ans: 0, p: "Kampung adalah bentuk terkecil dari desa; Kota adalah bentuk terkecil dari metropolis." },
+        { q: "Deret angka: 2, 4, 8, 16, 32, ... Angka berikutnya adalah...", opts: ["48", "60", "64", "68", "72"], ans: 2, p: "Pola perkalian 2 berturut-turut: 32 * 2 = 64." },
+        { q: "Sinonim kata KELAS :", opts: ["Kategori", "Tempat", "Tingkat", "Sekolah", "Grup"], ans: 0, p: "Sinonim dari kelas adalah kategori atau penggolongan." },
+        { q: "Antonim kata ABSTRAK :", opts: ["Maya", "Konkret", "Samar", "Jelas", "Fakta"], ans: 1, p: "Lawan kata dari abstrak (tidak berwujud) adalah konkret (berwujud nyata)." },
+        { q: "Semua donor darah diperiksa kesehatannya. Andi tidak diperiksa kesehatannya. Kesimpulan:", opts: ["Andi donor darah sehat", "Andi donor darah sakit", "Andi bukan donor darah", "Andi donor darah yang tertunda", "Tidak dapat disimpulkan"], ans: 2, p: "Syarat mutlak donor darah adalah diperiksa kesehatannya. Jika tidak diperiksa, maka Andi bukan donor darah." },
+        { q: "Deret angka: 100, 95, 85, 70, 50, ... Angka berikutnya adalah...", opts: ["25", "30", "20", "35", "15"], ans: 0, p: "Pola pengurangan bertingkat: -5, -10, -15, -20, -25. Maka 50 - 25 = 25." },
+        { q: "KAPAL : JANGKAR = MOBIL : ...", opts: ["Rem", "Roda", "Setir", "Kunci", "Spion"], ans: 0, p: "Jangkar berfungsi menghentikan/menahan kapal; Rem berfungsi menghentikan/menahan mobil." },
+        { q: "Penyelesaian persamaan: 2x + 6 = 20, nilai x adalah...", opts: ["5", "6", "7", "8", "9"], ans: 2, p: "2x = 20 - 6 => 2x = 14 => x = 7." },
+        { q: "Seri huruf: A, Z, B, Y, C, ... Huruf berikutnya adalah...", opts: ["D", "W", "X", "V", "E"], ans: 2, p: "Pola dua arah: (A, B, C...) dan (Z, Y, X...). Huruf setelah C pada pola kedua adalah X." },
+        { q: "Semua kendaraan bermotor menggunakan BBM. Sebagian kendaraan bermotor berroda tiga. Kesimpulan:", opts: ["Semua kendaraan roda tiga menggunakan BBM", "Sebagian kendaraan bermotor berroda tiga menggunakan BBM", "Kendaraan roda tiga tidak menggunakan BBM", "Sebagian kendaraan BBM berroda empat", "Semua kendaraan BBM berroda tiga"], ans: 1, p: "Sebagian kendaraan bermotor (yang berroda tiga) pasti menggunakan BBM." },
+        { q: "MATA : EDITING = TELINGA : ...", opts: ["Mendengar", "Suara", "Musik", "Audisi", "Headphone"], ans: 3, p: "Mata digunakan untuk penyaringan visual (editing); Telinga digunakan untuk penyaringan audio (audisi)." },
+        { q: "Deret angka: 5, 10, 8, 16, 14, 28, ... Angka berikutnya adalah...", opts: ["26", "30", "32", "24", "26"], ans: 0, p: "Pola selang-seling: *2, -2, *2, -2. Setelah 28 (-2) adalah 26." },
+        { q: "Jika P > Q, Q > R, dan R > S, maka...", opts: ["P < S", "S > P", "P > S", "P = S", "Q < S"], ans: 2, p: "Berdasarkan sifat transitif pertidaksamaan: P > Q > R > S, maka P > S." },
+        { q: "KERTAS : PENA = PAPAN TULIS : ...", opts: ["Penghapus", "Penggaris", "Spidol", "Pensil", "Buku"], ans: 2, p: "Pena digunakan untuk menulis di kertas; Spidol digunakan untuk menulis di papan tulis." },
+        { q: "Sinonim kata INSINUASI :", opts: ["Sindiran", "Sanjungan", "Tuduhan", "Bantuan", "Ujaran"], ans: 0, p: "Insinuasi berarti sindiran tersembunyi atau kiasan." },
+        { q: "Antonim kata PROMISKUITAS :", opts: ["Kebebasan", "Kepatuhan", "Kesetiaan", "Keterikatan", "Penyimpangan"], ans: 2, p: "Promiskuitas berarti pergaulan bebas; lawan katanya adalah kesetiaan." },
+        { q: "Seri huruf: Z, X, V, T, R, ... Huruf berikutnya adalah...", opts: ["P", "Q", "O", "N", "S"], ans: 0, p: "Pola mundur 2 langkah: Z, X, V, T, R, P." },
+        { q: "30% dari 150 adalah...", opts: ["35", "40", "45", "50", "55"], ans: 2, p: "30/100 * 150 = 45." },
+        { q: "DINDING : CAT = KAYU : ...", opts: ["Paku", "Gergaji", "Pelitur", "Papan", "Pohon"], ans: 2, p: "Dinding dilapisi cat agar indah; Kayu dilapisi pelitur agar indah." },
+        { q: "Deret angka: 1, 4, 9, 16, 25, ... Angka berikutnya adalah...", opts: ["30", "35", "36", "40", "49"], ans: 2, p: "Deret kuadrat: 1^2, 2^2, 3^2, 4^2, 5^2, 6^2 = 36." },
+        { q: "Hasil dari (12 x 5) + (40 : 8) = ...", opts: ["62", "63", "64", "65", "66"], ans: 3, p: "60 + 5 = 65." },
+        { q: "Pilih bentuk figural lanjutan dari pola rotasi 90 derajat searah jarum jam berikut:", fig: `<svg width="80" height="80"><rect width="80" height="80" fill="#e2e8f0"/><path d="M10 10 L70 10 L40 70 Z" fill="#0b2340"/></svg>`, opts: ["Segitiga menghadap kanan", "Segitiga menghadap kiri", "Segitiga menghadap bawah", "Segitiga terbalik", "Segitiga konkaf"], ans: 0, p: "Segitiga puncak bawah diputar 90 derajat searah jarum jam akan menghadap ke kanan." },
+        { q: "Pilih gambar yang merotasikan persegi dengan satu lingkaran hitam di pojok kanan atas sebesar 180 derajat:", fig: `<svg width="80" height="80"><rect width="80" height="80" fill="#e2e8f0"/><circle cx="60" cy="20" r="10" fill="#0b2340"/></svg>`, opts: ["Lingkaran di pojok kiri bawah", "Lingkaran di pojok kanan bawah", "Lingkaran di pojok kiri atas", "Lingkaran di tengah", "Lingkaran di luar"], ans: 0, p: "Posisi kanan atas diputar 180 derajat berpindah ke posisi diagonal berseberangan: kiri bawah." },
+        { q: "Berapakah 15% dari 200?", opts: ["25", "30", "35", "40", "45"], ans: 1, p: "15/100 * 200 = 30." },
+        { q: "Seri huruf: B, D, G, K, P, ... Huruf berikutnya adalah...", opts: ["T", "U", "V", "W", "X"], ans: 2, p: "Pola lompatan bertambah: +2 (D), +3 (G), +4 (K), +5 (P), +6 (V)." },
+        { q: "KECERDASAN : BELAJAR = KESEHATAN : ...", opts: ["Olahraga", "Dokter", "Obat", "Rumah Sakit", "Kebugaran"], ans: 0, p: "Kecerdasan diperoleh dengan belajar; Kesehatan diperoleh dengan olahraga." },
+        { q: "Hasil dari √144 + √25 = ...", opts: ["15", "16", "17", "18", "19"], ans: 2, p: "12 + 5 = 17." },
+        { q: "Deret angka: 4, 8, 12, 16, 20, ... Angka berikutnya adalah...", opts: ["22", "24", "26", "28", "30"], ans: 1, p: "Pola kelipatan 4: 20 + 4 = 24." }
+    ];
+
+    let bankTIU = [];
+    let currentQ = 0;
+    let userAnswers = {};
+    let timerInterval;
+
+    function shuffleArray(array) {
+        let arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function encryptData(dataObj) {
+        const str = JSON.stringify(dataObj);
+        const bytes = new TextEncoder().encode(str);
+        return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        bankTIU = rawTIU.map(item => {
+            let optsWithOrig = item.opts.map((o, idx) => ({ text: o, isAns: idx === item.ans }));
+            let shuffled = shuffleArray(optsWithOrig);
+            return {
+                ...item,
+                shuffledOpts: shuffled.map(s => s.text),
+                newAns: shuffled.findIndex(s => s.isAns)
+            };
+        });
+
+        renderNav();
+        loadQ(0);
+        startTimer(35 * 60);
+    });
+
+    function loadQ(idx) {
+        currentQ = idx;
+        const qData = bankTIU[idx];
+        document.getElementById('q-no').innerText = `Soal ${idx + 1} dari 35`;
+        document.getElementById('q-text').innerText = qData.q;
+        
+        const figCont = document.getElementById('q-fig');
+        if(qData.fig) {
+            figCont.innerHTML = qData.fig;
+            figCont.style.display = 'block';
+        } else {
+            figCont.style.display = 'none';
+            figCont.innerHTML = '';
+        }
+
+        let html = '';
+        const optsToRender = qData.shuffledOpts || qData.opts;
+        optsToRender.forEach((opt, i) => {
+            const isSelected = userAnswers[idx] === i ? 'selected' : '';
+            html += `<div class="opt ${isSelected}" onclick="selectOpt(${i})">${String.fromCharCode(65+i)}. ${opt}</div>`;
+        });
+        document.getElementById('options').innerHTML = html;
+        document.getElementById('btn-next').innerText = idx === bankTIU.length - 1 ? "Selesai" : "Selanjutnya";
+        renderNav();
+    }
+
+    function selectOpt(optIdx) {
+        userAnswers[currentQ] = optIdx;
+        loadQ(currentQ);
+        setTimeout(() => { nextQ(); }, 250);
+    }
+
+    function renderNav() {
+        let html = '';
+        for(let i = 0; i < bankTIU.length; i++) {
+            let cls = 'nav-item';
+            if(userAnswers[i] !== undefined) cls += ' filled';
+            if(i === currentQ) cls += ' active';
+            html += `<div class="${cls}" onclick="loadQ(${i})">${i + 1}</div>`;
+        }
+        document.getElementById('navGrid').innerHTML = html;
+    }
+
+    function nextQ() {
+        if(currentQ === bankTIU.length - 1) {
+            if(confirm("Apakah Anda yakin ingin menyelesaikan Tes TIU ini?")) finishTest();
+            return;
+        }
+        loadQ(currentQ + 1);
+    }
+
+    function prevQ() {
+        if(currentQ > 0) loadQ(currentQ - 1);
+    }
+
+    function startTimer(seconds) {
+        let t = seconds;
+        timerInterval = setInterval(() => {
+            let m = Math.floor(t / 60);
+            let s = t % 60;
+            document.getElementById('timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            if(--t < 0) {
+                clearInterval(timerInterval);
+                finishTest();
+            }
+        }, 1000);
+    }
+
+    function finishTest() {
+        clearInterval(timerInterval);
+        let benar = 0;
+        let salah = 0;
+        let kosong = 0;
+        let pembahasan = [];
+
+        bankTIU.forEach((q, i) => {
+            const uAns = userAnswers[i];
+            const correctIdx = q.newAns !== undefined ? q.newAns : q.ans;
+            const isCorrect = uAns === correctIdx;
+            const opts = q.shuffledOpts || q.opts;
+
+            if(uAns === undefined) {
+                kosong++;
+            } else if(isCorrect) {
+                benar++;
+            } else {
+                salah++;
+            }
+
+            pembahasan.push({
+                soal: q.q,
+                jawabanUser: uAns !== undefined ? `${String.fromCharCode(65+uAns)}. ${opts[uAns]}` : 'Tidak Dijawab',
+                kunci: `${String.fromCharCode(65+correctIdx)}. ${opts[correctIdx]}`,
+                isCorrect: isCorrect,
+                penjelasan: q.p || 'Penalaran logis dan matematis sesuai kaidah TIU.'
+            });
+        });
+
+        let skorTotal = benar * 5;
+
+        function decryptData(encryptedHex) {
+            if (!encryptedHex) return null;
+            try {
+                const bytes = new Uint8Array(encryptedHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                return JSON.parse(new TextDecoder().decode(bytes));
+            } catch (e) { return null; }
+        }
+
+        let resData = decryptData(localStorage.getItem('PRC_SKD_RESULT_ENC')) || JSON.parse(localStorage.getItem('PRC_SKD_RESULT') || '{}');
+        resData.tiu_1 = { benar, salah, kosong, score: skorTotal, max: 175, pembahasan };
+        resData.timestamp = Date.now();
+
+        const encrypted = encryptData(resData);
+        localStorage.setItem('PRC_SKD_RESULT_ENC', encrypted);
+        localStorage.setItem('PRC_SKD_RESULT', JSON.stringify(resData));
+
+        alert(`Tes TIU Selesai!\nSkor Anda: ${skorTotal} / 175 (Benar: ${benar}, Salah: ${salah}, Kosong: ${kosong})`);
+        window.location.href = 'index.html';
+    }
+</script>
+</body>
+</html>
